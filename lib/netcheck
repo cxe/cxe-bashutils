@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+##
+# netcheck function
+# @version (2024-09-25)
+# @checksum cbd6a32461a86a13efc2310b4180869600eb29b149d54fae5bd14e9116421b9b
+##
+declare -F netcheck &>/dev/null || {
+    netcheck() {
+      host="$1"; ping -c1 "$host" && nslookup "$host" && curl -I "https://$host"
+    }
+}
+
+[ "${BASH_SOURCE[0]}" = "$0" ] && netcheck "$@"
