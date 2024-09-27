@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+# @usage:  typeof <varname>|<command> [<matcher>] [<match>]
+#          if matchers are used no output is generated
+# @return: array|boolean|builtin|file|function|number|object|string|undefined
+declare -F typeof > /dev/null || typeof(){
+  local name="$1" data="${!1}" type=string
+  if [[ "$name" =~ ^[_[:alpha:]][_[:alpha:][:digit:]]*$ ]]; then
+    declare -a attr; read -ra attr < <( declare -p "$name" 2>/dev/null )
+    case "${attr[1]}" in
+      '')  type="$( type -t "$name" 2>/dev/null )" || type=undefined;;
+      *A*) type=object; declare -n data="$name";;
+      *a*) type=array; declare -n data="$name";;
+      *i*) type=number;;
+      *) if [[ "$data" == ?(-|+)+([0-9])?(.+([0-9])) ]]; then type=number
+         elif [[ "$data" == @(true|false) ]]; then type=boolean; fi
+    esac
+  fi
+  [ $# -lt 2 ] && echo $type || case "$2" in
+    ===|==|=) [ "$type" == "$3" ] || return 2;;
+    !=) [ "$type" != "$3" ] || return 2;;
+    is) case "$3" in
+        readonly) [[ "${attr[1]}" == *r* ]];;
+        executable) [[ "$type" == @(builtin|file|function) ]];;
+        empty) [ ${#data[@]} == 0 ];;
+      esac ;;
+    =~|matches) [[ "$data" =~ $3 ]];;
+  esac
+}
