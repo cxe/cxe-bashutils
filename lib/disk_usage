@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+##
+# disk_usage function
+# @version (2024-10-03)
+# @checksum 348ec288246130733c2def3253381147e9e0fb5e3a4c82ca45a959489164faad
+##
+declare -F disk_usage &>/dev/null || {
+    disk_usage() {
+        df -h / | awk 'NR==2 { print "Used:", $3, "| Free:", $4, "| Usage:", $5 }'
+    }
+}
+
+[ "${BASH_SOURCE[0]}" = "$0" ] && disk_usage "$@"
