@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+##
+# memtop function
+# display top 10 processes by memory usage
+# @version (2024-10-09)
+# @checksum 0c705023ef2f1111f69c57227a3075166f678ec40015500c7ae38a4c6e77a20c
+##
+declare -F memtop &>/dev/null || {
+    memtop() {
+        ps aux --sort=-%mem | awk 'NR==1 || NR<=11'
+    }
+}
+
+[ "${BASH_SOURCE[0]}" = "$0" ] && memtop "$@"
