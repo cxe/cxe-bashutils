@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+##
+# memfree function
+# @version (2024-10-11)
+# @checksum ae4c27e769a70e2059424bd1667616d1992e7d8daaed81abc485d366b9c8e1ce
+##
+declare -F memfree &>/dev/null || {
+    memfree() {
+        if command -v free >/dev/null; then
+            free -h
+        elif command -v vm_stat >/dev/null; then
+            vm_stat | awk '
+                /Pages free/     {free=$3}
+                /Pages active/   {active=$3}
+                END {
+                    page_size=4096
+                    printf "Free: %.2f MiB\n", free*page_size/1024/1024
+                    printf "Active: %.2f MiB\n", active*page_size/1024/1024
+                }'
+        else
+            echo "Unsupported system"
+            return 1
+        fi
+    }
+}
+
+[ "${BASH_SOURCE[0]}" = "$0" ] && memfree "$@"
