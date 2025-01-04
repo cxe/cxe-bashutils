@@ -55,3 +55,16 @@ dir_containing() {
     [ -e "$d/$1" ] && echo "${d:-/}" || return 404
 }
 
+echorun(){
+  cmd="$1"
+  args="${@:2}"
+  >&2 echo -e "\033[1;36m${cmd}\033[0;36m ${args}\033[0m"
+  [ -z $DRY ] && $cmd $args
+}
+
+
+# @usage FOO="$(findUpwardFile foo.txt)"
+readUpwardFile() {
+    echo "$(f=/$1; d="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"; while [ "$d" != "/" ]; do [ -f "$d$f" ] && echo "$d$f"; d="$(dirname "$d")"; done)"
+}
+
