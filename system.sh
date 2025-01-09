@@ -1,2 +1,3 @@
 
-if_os() { [ "$OSTYPE" == $1* ] || return 1; }
+if_sys(){ [ "$OSTYPE" == $1* ] || return 1; }
+sys_arch(){ uname -m; }
