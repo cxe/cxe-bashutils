@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
+# @return: array|boolean|builtin|file|function|number|object|string|undefined
 # @usage:  typeof <varname>|<command> [<matcher>] [<match>]
 #          if matchers are used no output is generated
-# @return: array|boolean|builtin|file|function|number|object|string|undefined
-declare -F typeof > /dev/null || typeof(){
+#          eg.: `if typeof foobar == function; then echo foobar is a function; fi`
+declare -F typeof >/dev/null 2>/dev/null || typeof(){
   local name="$1" data="${!1}" type=string
   if [[ "$name" =~ ^[_[:alpha:]][_[:alpha:][:digit:]]*$ ]]; then
     declare -a attr; read -ra attr < <( declare -p "$name" 2>/dev/null )
