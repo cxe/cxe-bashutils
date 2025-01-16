@@ -17,3 +17,20 @@ sys_arch(){ uname -m; }
 
 # check if a command is a path-binary
 sys_path_bin(){ builtin type -P "$1" &> /dev/null; }
+
+# @alias extract, unarchive, expand
+uncompress() {
+  [ -f "$1" ] || return 2
+  case $1 in
+      *.tar.bz2|*.tbz2)  tar xvjf $1 && return;;
+      *.tar.gz|*.tgz)    tar xvzf $1 && return;;
+      *.bz2)             bunzip2 $1 && return;;
+      *.rar)             unrar x $1 && return;;
+      *.gz)              gunzip $1 && return;;
+      *.tar)             tar xvf $1 && return;;
+      *.zip)             unzip $1 && return;;
+      *.Z)               uncompress $1 && return;;
+      *.7z)              7z x $1 && return;;
+  esac
+  return 3
+}
