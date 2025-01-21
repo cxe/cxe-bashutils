@@ -54,7 +54,7 @@ declare -F typeof >/dev/null 2>/dev/null || {
   # array functions
   pop(){ declare -n v=$1 && shift && [ $# == 0 ] || v=("${@:0:${}}"); }
   push(){ declare -n v=$1 && shift && [ $# == 0 ] || v=("${v[@]}" "$@"); }
-  clear(){ declare -n v=$1 && v=(); }
+  empty(){ declare -n v=$1 && v=(); }
   unshift(){ declare -n v=$1 && shift && [ $# == 0 ] || v=("$@" "${v[@]}"); }
   join(){ local d="$1"; echo -n "$2"; shift 2 && printf '%s' "${@/#/$d}"; }
   # todo: contains
