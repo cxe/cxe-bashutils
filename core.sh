@@ -50,15 +50,6 @@ declare -F typeof >/dev/null 2>/dev/null || {
 
   # terminal interaction functions
   is_terminal() { [[ -t 1 || -z ${TERM} ]] && return 0 || return 1; }
-  
-  # array functions
-  pop(){ declare -n v=$1 && shift && [ $# == 0 ] || v=("${@:0:${}}"); }
-  push(){ declare -n v=$1 && shift && [ $# == 0 ] || v=("${v[@]}" "$@"); }
-  empty(){ declare -n v=$1 && v=(); }
-  unshift(){ declare -n v=$1 && shift && [ $# == 0 ] || v=("$@" "${v[@]}"); }
-  join(){ local d="$1"; echo -n "$2"; shift 2 && printf '%s' "${@/#/$d}"; }
-  # todo: contains
-  # todo: unique
 
   # @usage: `dir_containing [--stop=<dir>] <sub-path-to-find>`
   # @params: 1) (sub-)filename to find, 2) starting-dir (defaults to PWD)
