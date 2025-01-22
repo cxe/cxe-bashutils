@@ -6,16 +6,20 @@ bash utility scripts
 ## Functions
 
 - args (core) parse CLI arguments, options and flags
+- array_clear (array) remove all elements from array
+- array_join (array) merge array to string
+- array_pop (array) remove item(s) from end of array
+- array_print (array) array contents to stdout
+- array_push (array) add item(s) at end of array
+- array_shift (array) remove item(s) from beginning of array
+- array_unshift (array) add item to beginning of array
 - dir_containing (core) find file upward
 - epoch (time) determine seconds since epoch for a date
 - echorun (core) print and run a command
-- empty (core) remove all elements from array
+- is_array (array) determine if variable is an array
 - is_terminal (core) determine if on terminal
-- join (core) merge array to string
 - lowercase (string) convert to lowercase
 - node_install_latest (nodejs) install the latest nodeJS version
-- pop (core) fetch last item of array
-- push (core) add item as last of array
 - readUpwardFile (core) find upward file and read it
 - round (math) round a number
 - sys_arch (sys) determine the OS architecture
@@ -24,6 +28,5 @@ bash utility scripts
 - trim (string) remove surrounding whitespace
 - typeof (core) determine type of command or variable
 - uncompress (sys) extract archive
-- unshift (core) add item to beginning of array
 - uppercase (string) convert to uppercase
 - url_type (string) parse an URL and return the scheme as type
