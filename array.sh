@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-declare -F is_array >/dev/null 2>/dev/null || {
+source "${BASH_SOURCE%/*}/core.sh"
+
+typeof is_array == function || {
 
   # append item(s) to end of array
   # @usage: array_push MYARRAY item-0 [,...item-n]
