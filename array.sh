@@ -24,6 +24,7 @@ declare -F is_array >/dev/null 2>/dev/null || {
   
   # return error if not an array variable (either hashmap or indexed)
   # @usage:   is_array FOO && echo "the array $_ has ${#FOO[@]} item(s) " || echo "variable value is";
+  # @see typeof
   is_array(){ declare -n v=$1; [[ "${#v[@]}" -gt 1 ]] && return 0; declare tmp=() && readarray -d " " -t "$_" < <( declare -p $1 ); [[ ${tmp[1],,} == *a* ]]; }
   
   # empty an array
