@@ -5,7 +5,6 @@ declare -F typeof >/dev/null 2>/dev/null || {
   # parse CLI arguments, options and flags
   # @usage: declare -A opts && args "$@"
   args(){
-      echo previous command $!
       local k v && declare -i i=0 n=${#@} && declare -n o=${_:-opts} a=args && a=()
       for ((i=1; i<=n; ++i)); do
           v="${!i}"
@@ -47,6 +46,11 @@ declare -F typeof >/dev/null 2>/dev/null || {
       =~|matches) [[ "$data" =~ $3 ]];;
     esac
   }
+
+  # read a line from a file
+  # @param 1: line number (if none provided use calling line)
+  # @param 2: file name (if none provided use current)
+  readline(){ declare -a l && readarray -t l <"${2:-$BASH_SOURCE}" && echo "${l[${1:-$BASH_LINENO}-1]}"; }
 
   # terminal interaction functions
   is_terminal() { [[ -t 1 || -z ${TERM} ]] && return 0 || return 1; }
