@@ -1,0 +1,9 @@
+{
+  "DOMInjection":[
+    "</script><script>alert('pawned');</script>",
+    "<img src=0 onerror=\"alert('pawned') /\>",
+    "\\u003C\\u002Fscript\\u003E\\u003Cscript\\u003Ealert('pawned');\\u003C\\u002Fscript\\u003E",
+    "\\u003Cimg src=0 onerror='alert(`pawned`)'\\u003E"
+  ],
+  "StructuredFormatInjection": {"name"="Dana\",\"role\":\"admin"}
+}
