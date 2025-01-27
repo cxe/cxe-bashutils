@@ -14,4 +14,4 @@ test_json_file(){
     describe::end
 }
 
-find "${BASH_SOURCE[0]%/*}/files" -name '*.json' -type f -print0 | while IFS= read -r -d '' f; do test_json_file "$f"; done
+while file_list "${BASH_SOURCE[0]%/*}/files" '*.json'; do test_json_file "$f"; done

@@ -5,9 +5,17 @@ declare -gxr WORKDIR_BUILD="$WORKDIR_LOCAL/tmp/latest" \
              WORKDIR_TEST="$WORKDIR_LOCAL/test" \
              WORKDIR_SRC="$WORKDIR_LOCAL/src"
 
-source "$WORKDIR_SRC/file.sh"
 
-build_file(){ declare -n v=build_file; v="${1/"$WORKDIR_SRC"/"$WORKDIR_BUILD"}"; v="${v/.sh/}"; }
+source "$WORKDIR_SRC/core.sh"
+source "$WORKDIR_SRC/sys.sh"
+source "$WORKDIR_SRC/fs.sh"
+
+build_file(){
+  declare -n target=build_file; target="${1/"$WORKDIR_SRC"/"$WORKDIR_BUILD"}"; target="${target/.sh/}";
+  declare name="${target##*/}"
+  sys_command "$name" && fail "module name conflict '$name'"
+  cp "$1" "$target"
+}
 
 if is_dir "$WORKDIR_BUILD"; then
   mv "$WORKDIR_BUILD" "$WORKDIR_BUILD~$( date +"%Y-%m-%d_%H-%M-%S%z" )"
@@ -15,6 +23,6 @@ fi
 
 mkdir -p "$WORKDIR_BUILD"
 
-while file_list "$WORKDIR_SRC" '*.sh'; do
-  echo "'$file'"
+declare file; while file_list "$WORKDIR_SRC" '*.sh'; do
+  build_file "$file"
 done

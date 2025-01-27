@@ -4,19 +4,31 @@
 sys_type(){
   local os="${OSTYPE,,}"
   case "${1,,}" in
-    mac|darwin|ios) [ $os == darwin* ] && return 0;;
-    linux|unix) if [[ $os == *linux* ]] || [[ $os == *bsd* ]] || [[ $os == *solaris* ]] || [[ $os == *android* ]] || [[ $os == *gnu* ]] then return 0; fi
-    win) if [[ $os == *cygwin* ]] || [[ $os == *mingw* ]] then return 0; fi
-    *) [[ $os == $1* ]] && return 0
+    mac|darwin|ios) [[ $os == darwin* ]] && return 0 ;;
+    linux|unix) if [[ $os == *linux* ]] || [[ $os == *bsd* ]] || [[ $os == *solaris* ]] || [[ $os == *android* ]] || [[ $os == *gnu* ]]; then return 0; fi;;
+    win) if [[ $os == *cygwin* ]] || [[ $os == *mingw* ]]; then return 0; fi;;
+    *) [[ $os == $1* ]] && return 0;;
   esac
   return 1
 }
+
+# check if a command is installed
+sys_command(){ command -v "$1" &> /dev/null; }
 
 # OS architecture
 sys_arch(){ uname -m; }
 
 # check if a command is a path-binary
 sys_path_bin(){ builtin type -P "$1" &> /dev/null; }
+
+# return byte size
+# @usage sys_bits || sys_bits 64
+sys_bits() {
+  local ref=""; [ $1 == -n ] && { ref="$1" && declare -n v="$2"; shift 2; } || local v
+  local v=$( getconf LONG_BIT )
+  if [ $# -gt 0 ]; then [[ "$1" == "$bits" ]] && return 0; return 2; fi
+  [ "$ref" ] || echo "$v";
+}
 
 # @alias extract, unarchive, expand
 uncompress() {

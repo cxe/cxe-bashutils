@@ -69,17 +69,23 @@ declare -F typeof >/dev/null 2>/dev/null || {
       while [ "$d" ] && [ "$d" != "$stop" ] && [ ! -e "$d/$1" ]; do d="${d%/*}"; done
       [ -e "$d/$1" ] && echo "${d:-/}" || return 404
   }
-  
+
   echorun(){
     cmd="$1"
     args="${@:2}"
     >&2 echo -e "\033[1;36m${cmd}\033[0;36m ${args}\033[0m"
     [ -z $DRY ] && $cmd $args
   }
-  
-  
+
+
   # @usage FOO="$(findUpwardFile foo.txt)"
   readUpwardFile() {
       echo "$(f=/$1; d="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"; while [ "$d" != "/" ]; do [ -f "$d$f" ] && echo "$d$f"; d="$(dirname "$d")"; done)"
+  }
+
+  fail(){
+    declare -i errno=0 && [[ "$1" = [[:digit:]] ]] && (( $1 > 0 && $1 <= 255 )) && errno="$1" && shift
+    >&2 echo -e "\033[31mError #$errno: $* at ${BASH_SOURCE[2]}:${BASH_LINENO[1]}\033[0m"
+    exit $errno
   }
 }

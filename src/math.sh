@@ -1,3 +1,13 @@
 #!/usr/bin/env bash
 
-round(){ echo $( printf %.$2f $(echo "scale=$2;(((10^$2)*$1)+0.5)/(10^$2)" | bc) ); }
+declare -xg INT_MAX INT_MIN UINT_MAX UINT_MIN LLONG_MIN LLONG_MAX LONG_MIN LONG_MAX
+INT_MAX="$( getconf INT_MAX )"
+INT_MIN="$( getconf INT_MIN )"
+UINT_MAX="$( getconf UINT_MAX )"
+LLONG_MIN="$( getconf LLONG_MIN )"
+LLONG_MAX="$( getconf LLONG_MAX )"
+LONG_MIN="$( getconf LONG_MIN )"
+LONG_MAX="$( getconf LONG_MAX )"
+declare -r INT_MAX INT_MIN UINT_MAX UINT_MIN LLONG_MIN LLONG_MAX LONG_MIN LONG_MAX
+
+round(){ printf "%.$2f" "$(echo "scale=$2;(((10^$2)*$1)+0.5)/(10^$2)" | bc )"; }

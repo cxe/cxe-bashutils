@@ -9,7 +9,7 @@ str_trim() {
   local ref=""; [ $1 == -n ] && { ref="$1" && declare -n v="$2"; shift 2; } || local v
   local ban="\r\n\t\f\v "; [ $# -gt 1 ] && ban="$1" && shift
   v="${1#"${1%%[!"$ban"]*}"}" && v="${v%"${v##*[!"$ban"]}"}"
-  [ "$ref" ] || echo "'$v'";
+  [ "$ref" ] || echo "$v";
 }
 
 # @return uppercase string
