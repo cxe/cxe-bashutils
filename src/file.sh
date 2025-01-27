@@ -46,3 +46,27 @@ url_type(){
     return 2
   fi
 }
+
+is_dir(){ [ -d "$1" ]; }
+
+is_link(){ [ -l "$1" ]; }
+
+is_file(){ [ -f "$1" ]; }
+
+# @alias exists
+is_fso(){ [ -e "$1" ]; }
+
+# @usage `while file_list . '*.sh'; do : ; done`
+file_list(){
+  declare -n _file=file
+  [ "$file_list_dir" ] || {
+    declare -gx file_list=() file_list_dir="$1"
+    while IFS= read -r -d '' f; do file_list+=("$f"); done < <( find "${1:-$PWD}" -name "${2:-*}" -type f -print0 )
+  }
+  if [ ${#file_list} == 0 ]; then
+    _file='' && file_list_dir="" && return 2
+  else
+    _file="${file_list[0]}"
+    file_list=("${file_list[@]:1}")
+  fi
+}

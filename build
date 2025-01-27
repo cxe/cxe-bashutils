@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+declare -gx WORKDIR_LOCAL && WORKDIR_LOCAL="$( realpath -- "${BASH_SOURCE[0]%/*}" )" && declare -r WORKDIR_LOCAL
+declare -gxr WORKDIR_BUILD="$WORKDIR_LOCAL/tmp/latest" \
+             WORKDIR_TEST="$WORKDIR_LOCAL/test" \
+             WORKDIR_SRC="$WORKDIR_LOCAL/src"
+
+source "$WORKDIR_SRC/file.sh"
+
+build_file(){ declare -n v=build_file; v="${1/"$WORKDIR_SRC"/"$WORKDIR_BUILD"}"; v="${v/.sh/}"; }
+
+if is_dir "$WORKDIR_BUILD"; then
+  mv "$WORKDIR_BUILD" "$WORKDIR_BUILD~$( date +"%Y-%m-%d_%H-%M-%S%z" )"
+fi
+
+mkdir -p "$WORKDIR_BUILD"
+
+while file_list "$WORKDIR_SRC" '*.sh'; do
+  echo "'$file'"
+done
