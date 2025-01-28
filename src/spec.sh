@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# unit testing for bash scripts
 declare -F describe >/dev/null 2>/dev/null || {
     source "${BASH_SOURCE[0]%/*}/string.sh"
 
@@ -24,6 +25,4 @@ declare -F describe >/dev/null 2>/dev/null || {
     ti(){
         TEST_NAME=("${TEST_NAME[@]:1:((${#TEST_NAME[@]}-1))}");
     }
-
-    #>&2 echo -e "\033[31mError: $* at ${BASH_SOURCE[2]}:${BASH_LINENO[1]}\033[0m"
 }

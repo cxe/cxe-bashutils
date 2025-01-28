@@ -13,7 +13,7 @@ sys_type(){
 }
 
 # check if a command is installed
-sys_command(){ command -v "$1" &> /dev/null; }
+sys_command(){ local t=$( type -t -- "$1"); [[ "$t" != @(file|builtin) ]]; }
 
 # OS architecture
 sys_arch(){ uname -m; }
