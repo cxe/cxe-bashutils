@@ -34,3 +34,11 @@ str_repeat(){
   v="$2" && while (( ${#v} < $1 )); do v="$v$v"; done; v="${v:0:$1}"
   [ "$ref" ] || echo -n "$v"
 }
+
+is_email() {
+    declare regex; regex="^([A-Za-z]+[A-Za-z0-9]*\+?((\.|\-|\_)?[A-Za-z]+[A-Za-z0-9]*)*)@(([A-Za-z0-9]+)+((\.|\-|\_)?([A-Za-z0-9]+)+)*)+\.([A-Za-z]{2,})+$"
+    [[ "$1" =~ $regex ]] && return 0
+    return 1
+}
+
+
