@@ -70,3 +70,9 @@ file_list(){
     file_list=("${file_list[@]:1}")
   fi
 }
+
+# remove all subdomains
+url_rootdomain { echo "$1" | rev | cut -d "." -f1-2 | rev; }
+
+# get all subdomains
+url_subdomain { echo "$1" | sed "s/\.$(url_rootdomain "$1")//g"; }
