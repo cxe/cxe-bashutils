@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+
+declare -F is_dir >/dev/null 2>/dev/null || {
+
+  source "${BASH_SOURCE[0]%/*}/core"
+
+  is_dir(){ [ -d "$1" ]; }
+
+  is_link(){ [ -l "$1" ]; }
+
+  is_file(){ [ -f "$1" ]; }
+
+  # @alias exists
+  is_fso(){ [ -e "$1" ]; }
+
+  # todo parameters fragment
+  url_parse(){
+    declare -a nameref=(); [ "$1" == -n ] && { declare -n result="$2"; read -ra nameref < <( declare -p "$2" 2>/dev/null ); shift 2; } || declare -A result; declare -r nameref
+    result=([scheme]="" [user]="" [pass]="" [host]="" [port]="" [path]="" [query]="") && local tmp
+    if [[ "$1" == *?* ]]; then
+      tmp="${1%%$'?'*}"
+      result[query]="${1#*$'?'}"
+    fi
+    if [[ "$tmp" == *://* ]]; then
+      result[scheme]="${tmp%%:*}" && result[scheme]="${result[scheme],,}"
+      tmp="${tmp:((${#result[scheme]}+3))}"
+    elif [ -e "$tmp" ]; then
+      result[scheme]="file"
+    fi
+    case "${result[scheme]}" in
+      "") return 1;;
+      file)
+        result[path]="$tmp";;
+      http|https|ftp|sftp)
+        result[path]="/${tmp#*\/}"
+        result[host]="${tmp%%\/*}"
+        if [[ "${result[host]}" == *@* ]]; then
+          result[user]="${result[host]%%@*}"
+          if [[ "${result[user]}" == *:* ]]; then
+            result[pass]="${result[user]#*:}"
+            result[user]="${result[user]%%:*}"
+          fi
+          result[host]="${result[host]#*@}"
+          if [[ "${result[host]}" == *:* ]]; then
+            result[port]="${result[host]#*:}"
+          fi
+        fi
+        ;;
+    esac
+    [ "$nameref" ] || echo "${result[@]}"
+  }
+
+  # @return a) string, scheme of URL (or "file" if filename exists)
+  #         b) if multiple params are given returns 0 only if type of first param matches one of the provided others
+  # @param: URL or filename
+  # @param(s): URL types to check for match
+  # @effect sets global variables: url_type, url_data, url_user, url_pass, url_host, url_port, url_path, url_query
+  # @alias is_url parse_url
+  # @usage `if url_type "$url" file http ftp; then ...`
+  url_type(){
+    declare url && url_parse -n url "$1" && shift
+    [ "${result[scheme]}" ] || return 1
+    "${result[scheme]}"
+    if [ "$#" -eq 0 ]; then
+      echo "${result[scheme]}"
+    else
+      local t && for t; do [ "${t,,}" == "${result[scheme]}" ] && return; done
+      return 2
+    fi
+  }
+
+  # @usage `declare file && while file_list -n file "$DIR" '*.*'; do echo "$file"; done`
+  file_list(){
+    declare -a nameref=(); [ "$1" == -n ] && { declare -n result="$2"; read -ra nameref < <( declare -p "$2" 2>/dev/null ); shift 2; } || declare result; declare -r nameref
+
+    [ "$file_list_dir" ] || {
+      declare -gx file_list=() file_list_dir="${1:-"$PWD"}"
+      while IFS= read -r -d '' f; do file_list+=("$f"); done < <( find "${1:-$PWD}" -name "${2:-*}" -type f -print0 )
+    }
+
+    if [ ${#file_list} == 0 ]; then
+      unset result file_list file_list_dir
+      return 2
+    fi
+
+    local pathname="${file_list[0]}" && file_list=("${file_list[@]:1}")
+    if [[ "${nameref[1]}" == *A* ]]; then
+      result[pathname]="$pathname"
+      result[basename]="${pathname##*/}"
+      result[path]="${pathname%/*}"
+      result[name]="${result[basename]%%.*}"
+      result[ext]="${result[basename]#*.}"; if [ "${result[ext]}" == "${result[basename]}" ]; then result[ext]=""; else result[ext]=".${result[ext]}"; fi
+      [ -d "$pathname" ] && result[type]="/" || { result[type]="${result[ext]##*.}"; result[type]="${result[type],,}"; [ "${result[type]}" ] && result[type]=".${result[type]}"; }
+    else
+      result="$pathname"
+    fi
+
+    [ "$nameref" ] || echo "${result[@]}"
+  }
+
+  # remove all subdomains
+  url_rootdomain() { echo "$1" | rev | cut -d "." -f1-2 | rev; }
+
+  # get all subdomains
+  url_subdomain() { echo "$1" | sed "s/\.$(url_rootdomain "$1")//g"; }
+
+  # @alias extract, unarchive, expand
+  fs_uncompress() {
+    [ -f "$1" ] || return 2
+    case $1 in
+        *.tar.bz2|*.tbz2)  tar xvjf $1 && return;;
+        *.tar.gz|*.tgz)    tar xvzf $1 && return;;
+        *.bz2)             bunzip2 $1 && return;;
+        *.rar)             unrar x $1 && return;;
+        *.gz)              gunzip $1 && return;;
+        *.tar)             tar xvf $1 && return;;
+        *.zip)             unzip $1 && return;;
+        *.Z)               uncompress $1 && return;;
+        *.7z)              7z x $1 && return;;
+    esac
+    return 3
+  }
+
+  # @usage: `dir_containing [--stop=<dir>] <sub-path-to-find>`
+  # @params: 1) (sub-)filename to find, 2) starting-dir (defaults to PWD)
+  # @options: --stop=<dir> directory where to stop searching (default: <root>)
+  # @return: directory-path (where the (sub-)filename was found),
+  #          otherwise empty string (along with a non-zero errorcode)
+  # @throws: #2 if called without parameters, #4 if not found
+  # @alias:  upfind, find_upward, fs_dir_including
+  dir_containing() {
+      local stop=""; [[ "$1" = --stop=* ]] && { stop="$( realpath "${1/--stop=/}" )"; shift; }
+      [ "$1" ] || return 2
+      local d="$( realpath "${2:-"$PWD"}" )"
+      while [ "$d" ] && [ "$d" != "$stop" ] && [ ! -e "$d/$1" ]; do d="${d%/*}"; done
+      [ -e "$d/$1" ] && echo "${d:-/}" || return 4
+  }
+
+  # @usage FOO="$(fs_uward foo.txt)"
+  # @alias readUpwardFile findUpwardFile
+  fs_upward() {
+      echo "$(f=/$1; d="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"; while [ "$d" != "/" ]; do [ -f "$d$f" ] && { echo "$d$f"; return; }; d="$(dirname "$d")"; done)"
+  }
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-source "${BASH_SOURCE[0]%/*}/../src/test.sh"
-source "${BASH_SOURCE[0]%/*}/../src/json.sh"
+source "${BASH_SOURCE[0]%/*}/../lib/spec"
+source "${BASH_SOURCE[0]%/*}/../lib/json"
 
 test_json_file(){
     declare -r file="$1"

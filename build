@@ -3,27 +3,19 @@
 declare -gx WORKDIR_LOCAL && WORKDIR_LOCAL="$( realpath -- "${BASH_SOURCE[0]%/*}" )" && declare -r WORKDIR_LOCAL
 declare -gxr WORKDIR_BUILD="$WORKDIR_LOCAL/tmp/latest" \
              WORKDIR_TEST="$WORKDIR_LOCAL/test" \
-             WORKDIR_SRC="$WORKDIR_LOCAL/src"
+             WORKDIR_LIB="$WORKDIR_LOCAL/lib"
 
+source "$WORKDIR_LIB/core"
+source "$WORKDIR_LIB/sys"
+source "$WORKDIR_LIB/log"
+source "$WORKDIR_LIB/fs"
 
-source "$WORKDIR_SRC/core.sh"
-source "$WORKDIR_SRC/sys.sh"
-source "$WORKDIR_SRC/log.sh"
-source "$WORKDIR_SRC/fs.sh"
-
-build_file(){
-  declare -n target=build_file; target="${1/"$WORKDIR_SRC"/"$WORKDIR_BUILD"}"; target="${target/.sh/}";
-  declare name="${target##*/}"
-  sys_command "$name" && fail $? "module name conflict '$name'"
-  cp "$1" "$target"
-}
-
-if is_dir "$WORKDIR_BUILD"; then
-  mv "$WORKDIR_BUILD" "$WORKDIR_BUILD~$( date +"%Y-%m-%d_%H-%M-%S%z" )"
-fi
-
-log mkdir -p "$WORKDIR_BUILD"
-
-declare file; while file_list "$WORKDIR_SRC" '*.sh'; do
-  build_file "$file"
+# check module names
+declare -A file && while file_list -n file "$WORKDIR_LIB"; do
+  sys_command "${file[name]}" && fail $? "module name conflict '${file[name]}'"
 done
+
+#if is_dir "$WORKDIR_BUILD"; then
+#  mv "$WORKDIR_BUILD" "$WORKDIR_BUILD~$( date +"%Y-%m-%d_%H-%M-%S%z" )"
+#fi
+#log mkdir -p "$WORKDIR_BUILD"
