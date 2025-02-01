@@ -3,6 +3,7 @@
 declare -F version_parse >/dev/null 2>/dev/null || {
 
     # parse version string
+    # @see https://semver.org/
     # @usage: declare -A v && version_parse -n v 1.23.456-pre.release+build.branch && array_print v
     version_parse(){
         declare -a nameref=(); [ "$1" == -n ] && { declare -n result="$2"; read -ra nameref < <( declare -p "$2" 2>/dev/null ); shift 2; } || declare result; declare -r nameref
@@ -12,5 +13,16 @@ declare -F version_parse >/dev/null 2>/dev/null || {
         result[core]="$tmp" && result[major]="${tmp%%.*}"
         [[ "$tmp" == *.* ]] && tmp="${tmp#*.}" && result[minor]="${tmp%%.*}"
         [[ "$tmp" == *.* ]] && tmp="${tmp#*.}" && result[patch]="${tmp%%.*}"
+    }
+
+    version_compatible(){
+        declare -r test="$1" match="$1"
+# todo: ~ (tilde): This means that you accept any patch updates within the same minor version. For example, ~1.4.0 means that you accept any version from 1.4.0 to 1.4.x, but not 1.5.x or higher.
+# todo: ^ (caret): This means that you accept any minor or patch updates within the same major version. For example, ^1.4.0 means that you accept any version from 1.4.0 to 1.x.x, but not 2.x.x or higher.
+# todo: * (asterisk): This means that you accept any version of the dependency. This is not recommended as it can introduce breaking changes or bugs without your control.
+# todo: > (greater than), < (less than), >= (greater than or equal to), <= (less than or equal to): These symbols allow you to specify a range of versions using inequality operators. For example, >=1.4.0 <2.0.0 means that you accept any version from 1.4.0 to 1.x.x, but not 2.x.x or higher.
+# todo: - (hyphen): This allows you to specify a range of versions using a dash. For example, 1.4.0 - 2.0.0 means that you accept any version from 1.4.0 to 2.0.0 inclusive.
+# todo: || (double pipe): This allows you to combine multiple ranges using an OR operator. For example, ^1.4.0 || ^2.0.0 means that you accept any version from 1.x.x or 2.x.x.
+        return 2
     }
 }
