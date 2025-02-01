@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+declare -F version_parse >/dev/null 2>/dev/null || {
+
+    # parse version string
+    # @usage: declare -A v && version_parse -n v 1.23.456-pre.release+build.branch && array_print v
+    version_parse(){
+        declare -a nameref=(); [ "$1" == -n ] && { declare -n result="$2"; read -ra nameref < <( declare -p "$2" 2>/dev/null ); shift 2; } || declare result; declare -r nameref
+        result=() && local tmp="$1"
+        [[ "$tmp" == *+* ]] && result[build]="${tmp#*+}" && tmp="${tmp%%+*}" # dot-separated build identifiers
+        [[ "$tmp" == *-* ]] && result[prerelease]="${tmp#*-}" && tmp="${tmp%%-*}" # dot-separated pre-release identifiers
+        result[core]="$tmp" && result[major]="${tmp%%.*}"
+        [[ "$tmp" == *.* ]] && tmp="${tmp#*.}" && result[minor]="${tmp%%.*}"
+        [[ "$tmp" == *.* ]] && tmp="${tmp#*.}" && result[patch]="${tmp%%.*}"
+    }
+}
