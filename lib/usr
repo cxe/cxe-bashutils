@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# @alias is_sudo
+declare -F usr_root >/dev/null 2>/dev/null || {
+    is_sudo(){ [ "$UID" ] || declare -gx UID="$( id -u )"; [[ $UID -eq 0 ]] || return 1; }
+}
+
+
