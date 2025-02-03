@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-declare -F typeof >/dev/null 2>/dev/null || {
+declare -F args >/dev/null 2>/dev/null || {
 
   # parse CLI arguments, options and flags
   # @usage: declare -A opts && args "$@"
@@ -17,6 +17,12 @@ declare -F typeof >/dev/null 2>/dev/null || {
           esac
       done
   }
+
+  import(){
+    local name="$1"
+    source "${BASH_SOURCE[0]%/*}/$name"
+  }
+
 
   # @return: array|boolean|builtin|file|function|number|object|string|undefined
   # @usage:  typeof <varname>|<command> [<matcher>] [<match>]
