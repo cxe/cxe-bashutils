@@ -18,42 +18,48 @@ declare -F version_parse >/dev/null 2>/dev/null || {
     # check if version matches rules
     # @usage: version_compatible 2.1.3 '~1.4.0 || ^2.0.0 ' && echo compatible || echo incompatible
     # rules: ~ allow patches, ^ allow minor and patches, * allow anything, >, <, ||
-    # todo: ranges e.g. 1.0 - 3.4
     version_compatible(){
-        declare -A test; version_parse -n test "$1" && shift && declare rules="${*//[[:space:]]/}" && declare -a t=() && declare -i k=0 i=0 n=${#rules}
+        declare -A v && version_parse -n v "$1" && shift && declare -a t=() # tokens
+        declare rules="${*//[[:space:]]-[[:space:]]/—}" && rules="${rules//[[:space:]]/}"
+        declare -i k=0 i=0 n=${#rules}
         while (( i<n )); do
             if [[ "${rules:k:2}" == @('||'|'>='|'<=') ]]; then ((i+=2))
-            elif [[ "${rules:i:1}" == @(^|~|>|<|$'\*') ]]; then ((++i))
+            elif [[ "${rules:i:1}" == @(^|~|>|<|$'\*'|—) ]]; then ((++i))
             elif [[ "${rules:i:1}" == @([[:digit:]]|[[:alpha:]]|.|+|-) ]]; then
                 while [[ "${rules:i:1}" == @([[:digit:]]|[[:alpha:]]|.|+|-) ]]; do ((++i)); done
-            else ((++i))
-            fi
+            else ((++i)); fi
             t+=("${rules:$k:((i-k))}")
             k=i
         done
-        declare -A m=();
+
+        declare lt eq gt && declare -A m=();
         for ((i=0, n=${#t[@]}; i<n; ++i)); do
+            lt="" eq="" gt=""
             if [[ "${t[i]:0:1}" == [[:digit:]] ]]; then
-                version_parse -n m "${t[i]}"
-                array_print m; echo ---
-                [ "${test[core]}" == "${m[core]}" ] && return
+                version_parse -n m "${t[i]}" && eq=1
             elif [[ "${t[((i+1))]:0:1}" == [[:digit:]] ]]; then
                 version_parse -n m "${t[((i+1))]}"
-                local -i t0="${test[major]}" t1="${test[minor]}" t2="${test[patch]}"
+                local -i v0="${v[major]}" v1="${v[minor]}" v2="${v[patch]}"
                 local -i m0="${m[major]}" m1="${m[minor]}" m2="${m[patch]}"
+                set -x
                 case "${t[i]}" in
-                    '>=') [ "${test[core]}" == "${m[core]}" ] && return ;&
-                    '>') (( t0 > m0 )) && return; (( t0 == m0 )) && { (( t1 > m1 )) && return; (( t1 == m1 )) && (( t2 > m2 )) && return; };;
-                    '<=') [ "${test[core]}" == "${m[core]}" ] && return ;&
-                    '<') (( t0 < m0 )) && return; (( t0 == m0 )) && { (( t1 < m1 )) && return; (( t1 == m1 )) && (( t2 < m2 )) && return; };;
-                    '~') (( t0 == m0 )) && (( t1 == m1 )) && return ;;
-                    '^') (( t0 == m0 )) && return ;;
+                    '—') eq=eq && lt=lt ;;
+                    '<=') eq=eq && lt=lt ;;
+                    '<') lt=lt ;;
+                    '>=') eq=eq && gt=gt ;;
+                    '>') gt=gt ;;
                     '*') return;;
+                    '^') (( v0 == m0 )) && return ;;
+                    '~') (( v0 == m0 )) && (( v1 == m1 )) && return ;;
                     '||') ;;
                 esac
+                [ "$eq" ] && [ "${v[core]}" == "${m[core]}" ] && return
+                [ "$lt" ] && (( v0 < m0 )) && return; (( v0 == m0 )) && { (( v1 < m1 )) && return; (( v1 == m1 )) && (( v2 < m2 )) && return; }
+                [ "$gt" ] && (( v0 > m0 )) && return; (( v0 == m0 )) && { (( v1 > m1 )) && return; (( v1 == m1 )) && (( v2 > m2 )) && return; }
             fi
         done
         return 2
     }
 
 }
+version_compatible 2.3.3 '1.4.0 - 2.0.0 ' && echo compatible || echo incompatible
