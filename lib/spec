@@ -1,28 +1,67 @@
 #!/usr/bin/env bash
 
 # unit testing for bash scripts
+# @see: also https://github.com/kward/shunit2
 declare -F describe >/dev/null 2>/dev/null || {
     source "${BASH_SOURCE[0]%/*}/string"
 
-    declare -gxa TEST_GROUP=()
-    declare -gxa TEST_NAME=()
+    declare -gx TEST_PATH=""
+    declare -gxa TEST_GROUP=() TEST_NAME=()
+    declare -gxA TEST_ERROR=() TEST_COUNT=()
+    declare -a TEST_OUTPUT=()
 
-    describe(){
-        TEST_GROUP=("$*" "${TEST_GROUP[@]}")
+    # print reverse output
+    trap test_exit EXIT && test_exit(){
+        local s i=${#TEST_OUTPUT[@]}
+        while ((--i > -1)); do >&2 echo -e "${TEST_OUTPUT[i]}\033[0m"; done
     }
 
+    # todo: [WIP]
+    describe(){
+        local -r test_group="$*"
+        TEST_PATH="$TEST_PATH/$test_group"
+        TEST_GROUP=("$test_group" "${TEST_GROUP[@]}")
+        TEST_ERROR["$TEST_PATH"]=""
+        TEST_COUNT["$TEST_PATH"]=0
+    }
+
+    # todo: [WIP]
     describe::end(){
         declare -ir group_depth=${#TEST_GROUP[@]}
         local indent && str_repeat -n indent $(( group_depth -1 )) '  '
-        >&2 echo -e "\033[31m$indent✘ ${TEST_GROUP[0]}\033[0m"
+        # todo determine failure TEST_ERROR["$TEST_PATH"]
+        TEST_OUTPUT+=("\033[31m$indent✘ ${TEST_GROUP[0]}")
         TEST_GROUP=("${TEST_GROUP[@]:1:(($group_depth-1))}");
     }
 
+    # todo: [WIP]
+    # @alias: 'test' (in non bash contexts)
     it(){
         TEST_NAME=("$*" "${TEST_NAME[@]}")
+        TEST_COUNT["$TEST_PATH"]=$(( ${TEST_COUNT["$TEST_PATH"]} + 1 ))
+        # todo: start output capturing
     }
 
+    # todo: [WIP]
     ti(){
         TEST_NAME=("${TEST_NAME[@]:1:((${#TEST_NAME[@]}-1))}");
+        # todo: use captured output
+        # todo determine failure TEST_ERROR["$TEST_PATH"]=$? ++
     }
+
+    # assertions
+    # todo: [WIP]
+    expect(){
+        local actual="$1"  matcher="$2" expectation="$3"
+        case "" in
+            toBe|toEqual|==)
+                [ "$actual" == "$expectation" ] || return 1
+                ;;
+        esac
+    }
+
+    # aliases
+    assert(){ expect "$@"; }
+    test:start(){ it "$@"; }
+    test:end(){ ti "$@"; }
 }
