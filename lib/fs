@@ -39,28 +39,40 @@
   # @alias exists
   is_fso(){ [ -e "$1" ]; }
 
-  # todo parameters fragment
+  # parse elements of a URL into an array
+  # @usage declare -A f; url_parse -n f "https://un:pw@Sup.Sub.Example.Com:8443/path/File.ext#Anchor?q=1&l=en"
   url_parse(){
     declare -a nameref=(); [ "$1" == -n ] && { declare -n result="$2"; read -ra nameref < <( declare -p "$2" 2>/dev/null ); shift 2; } || declare -A result; declare -r nameref
-    result=([scheme]="" [user]="" [pass]="" [host]="" [port]="" [path]="" [query]="" [domain]="" [tld]="" [ext]="") && local tmp="$1"
-    if [[ "$tmp" == *\?* ]]; then
+    result=([scheme]="" [user]="" [pass]="" [host]="" [port]="" [path]="" [frag]="" [query]="" [hostname]="" [domain]="" [subdomain]="" [tld]="" [ext]="" [file]="") && local tmp="$1"
+
+    if [[ "$tmp" == *\#* ]]; then
+      result[frag]="${tmp#*$'#'}"
+      tmp="${tmp%%$'#'*}"
+      if [[ "${result[frag]}" == *\?* ]]; then
+        result[query]="${result[frag]#*$'?'}"
+        result[frag]="${result[frag]%%$'?'*}"
+      fi
+    elif [[ "$tmp" == *\?* ]]; then
       result[query]="${tmp#*$'?'}"
       tmp="${tmp%%$'?'*}"
     fi
+
     if [[ "$tmp" == *://* ]]; then
       result[scheme]="${tmp%%:*}" && result[scheme]="${result[scheme],,}"
       tmp="${tmp:((${#result[scheme]}+3))}"
     elif [ -e "$tmp" ]; then
       result[scheme]="file"
     fi
+
     case "${result[scheme]}" in
-      "") return 1;;
+      '') return 1;;
       file)
         result[path]="$tmp";;
       http|https|ftp|sftp)
         result[path]="/${tmp#*\/}"
         result[host]="${tmp%%\/*}"
-        #echo "$1" | rev | cut -d "." -f1-2 | rev;
+
+        # extract credentials
         if [[ "${result[host]}" == *@* ]]; then
           result[user]="${result[host]%%@*}"
           if [[ "${result[user]}" == *:* ]]; then
@@ -69,16 +81,25 @@
           fi
           result[host]="${result[host]#*@}"
         fi
+        result[hostname]="${result[host]%%:*}"
+
+        # extract port
         if [[ "${result[host]}" == *:* ]]; then
           result[port]="${result[host]#*:}"
         else
           result[port]="${default_scheme_port["${result[scheme]}"]}"
         fi
-        result[tld]=".${result[host]##*.}"
-        result[domain]="${result[host]%.*}" && result[domain]="${result[domain]##*.}${result[tld]}"
+        
+        result[tld]=".${result[hostname]##*.}"
+        result[domain]="${result[hostname]%.*}" && result[domain]="${result[domain]##*.}${result[tld]}"
+        result[subdomain]="${result[hostname]//.${result[domain]}/}"
         ;;
     esac
-    result[ext]=".${result[path]##*.}"
+
+    # normalize path
+    [[ "${result[path]:-1}" == / ]] || result[file]="${result[path]##*$'/'}"
+    result[ext]=".${result[file]##*.}"
+
     [ "$nameref" ] || echo "${result[@]}"
   }
 
@@ -92,7 +113,6 @@
   url_type(){
     declare url && url_parse -n url "$1" && shift
     [ "${result[scheme]}" ] || return 1
-    "${result[scheme]}"
     if [ "$#" -eq 0 ]; then
       echo "${result[scheme]}"
     else
