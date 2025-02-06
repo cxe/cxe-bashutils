@@ -2,6 +2,8 @@
 
 [ "$default_scheme_port" ] || {
 
+  source "${BASH_SOURCE[0]%/*}/core"
+
   declare -gxrA default_scheme_port=(
     [dns]=53
     [ftp]=21
@@ -28,8 +30,6 @@
     [wss]=443
   )
 
-  source "${BASH_SOURCE[0]%/*}/core"
-
   is_dir(){ [ -d "$1" ]; }
 
   is_link(){ [ -l "$1" ]; }
@@ -43,7 +43,7 @@
   # @usage declare -A f; url_parse -n f "https://un:pw@Sup.Sub.Example.Com:8443/path/File.ext#Anchor?q=1&l=en"
   url_parse(){
     declare -a nameref=(); [ "$1" == -n ] && { declare -n result="$2"; read -ra nameref < <( declare -p "$2" 2>/dev/null ); shift 2; } || declare -A result; declare -r nameref
-    result=([scheme]="" [user]="" [pass]="" [host]="" [port]="" [path]="" [frag]="" [query]="" [hostname]="" [domain]="" [subdomain]="" [tld]="" [ext]="" [file]="") && local tmp="$1"
+    result=([scheme]="" [user]="" [pass]="" [host]="" [port]="" [path]="" [frag]="" [query]="" [hostname]="" [domain]="" [subdomain]="" [tld]="" [ext]="" [file]="" [href]="") && local tmp="$1"
 
     if [[ "$tmp" == *\#* ]]; then
       result[frag]="${tmp#*$'#'}"
@@ -81,6 +81,7 @@
           fi
           result[host]="${result[host]#*@}"
         fi
+        result[host]="${result[host],,}"
         result[hostname]="${result[host]%%:*}"
 
         # extract port
@@ -99,6 +100,18 @@
     # normalize path
     [[ "${result[path]:-1}" == / ]] || result[file]="${result[path]##*$'/'}"
     result[ext]=".${result[file]##*.}"
+
+    # normalized href
+    tmp="${result[scheme]}://"
+    if [ "${result[user]}" ]; then
+      tmp="$tmp${result[user]}"
+      [ "${result[pass]}" ] && tmp="$tmp:${result[pass]}"
+      tmp="$tmp@"
+    fi
+    tmp="$tmp${result[host]}${result[path]}"
+    [ "${result[query]}" ] && tmp="$tmp?${result[query]}"
+    [ "${result[frag]}" ] && tmp="$tmp#${result[frag]}"
+    result[href]="$tmp"
 
     [ "$nameref" ] || echo "${result[@]}"
   }
@@ -186,5 +199,29 @@
   # @alias readUpwardFile findUpwardFile
   fs_upward() {
       echo "$(f=/$1; d="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"; while [ "$d" != "/" ]; do [ -f "$d$f" ] && { echo "$d$f"; return; }; d="$(dirname "$d")"; done)"
+  }
+
+  # download a file (unzip gz)
+  # todo: option --unzip
+  # todo: tar -xf archive.tar.gz
+  download(){
+    declare -A url && url_parse -n url "$1"
+    declare fso="${2:-$PWD}" 
+    while true; do
+        if [ -f "$fso" ]; then
+            return 2
+        elif [ -d "$fso" ]; then
+            fso="$fso/${url[file]}"
+            continue
+        else
+            break
+        fi
+    done
+
+    if [ "${url[ext]}" == ".gz" ] && [[ "$fso" != *.gz ]]; then
+        curl -skLo - "${url[href]}" | gunzip >> "$fso"
+    else
+        curl -skLo "$fso" "${url[href]}"
+    fi
   }
 }

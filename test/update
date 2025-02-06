@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+source "${BASH_SOURCE[0]%/*}/../lib/core"
+source "${BASH_SOURCE[0]%/*}/../lib/fs"
+source "${BASH_SOURCE[0]%/*}/../lib/array"
+
+download https://bulk.meteostat.net/v2/stations/full.json.gz "${BASH_SOURCE[0]%/*}/files/object-meteostat-stations.json"
+
+# todo: JSON parse stations and download
