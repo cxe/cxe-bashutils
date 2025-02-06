@@ -10,12 +10,13 @@ declare -F describe >/dev/null 2>/dev/null || {
     declare -gxA TEST_ERROR=() TEST_COUNT=()
     declare -a TEST_OUTPUT=()
 
-    # print reverse output
+    # print reverse output (nested groups)
     trap test_exit EXIT && test_exit(){
         local s i=${#TEST_OUTPUT[@]}
         while ((--i > -1)); do >&2 echo -e "${TEST_OUTPUT[i]}\033[0m"; done
     }
 
+    # start of a description group
     # todo: [WIP]
     describe(){
         local -r test_group="$*"
@@ -25,8 +26,9 @@ declare -F describe >/dev/null 2>/dev/null || {
         TEST_COUNT["$TEST_PATH"]=0
     }
 
+    # end of a description group
     # todo: [WIP]
-    describe::end(){
+    ebircsed(){
         declare -ir group_depth=${#TEST_GROUP[@]}
         local indent && str_repeat -n indent $(( group_depth -1 )) '  '
         # todo determine failure TEST_ERROR["$TEST_PATH"]
@@ -62,6 +64,5 @@ declare -F describe >/dev/null 2>/dev/null || {
 
     # aliases
     assert(){ expect "$@"; }
-    test:start(){ it "$@"; }
-    test:end(){ ti "$@"; }
+    describe_end(){ ebircsed "$@"; }
 }

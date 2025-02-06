@@ -25,5 +25,5 @@ describe "fs"
             expect "${f[subdomain]}" toBe 'sup.sub'
             expect "${f[user]}" toBe 'un'
         ti
-    describe::end
-describe::end
+    ebircsed
+ebircsed

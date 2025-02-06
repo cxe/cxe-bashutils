@@ -10,8 +10,8 @@ test_json_file(){
     declare -r data="$(<"$file")"
 
     describe "$name"
-
-    describe::end
+        :
+    ebircsed
 }
 
 while file_list "${BASH_SOURCE[0]%/*}/files" '*.json'; do test_json_file "$f"; done
