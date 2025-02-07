@@ -18,6 +18,18 @@ declare -F args >/dev/null 2>/dev/null || {
       done
   }
 
+  return(){
+    declare -i code="${1:-0}"; shift
+    if [ "$*" ]; then
+        if [[ $code -gt 0 ]]; then
+            >&2 echo -e "\033[31mSuccess $* at ${BASH_SOURCE[2]}:${BASH_LINENO[1]}\033[0m"
+        else
+            >&2 echo -e "\033[31mError #$errno: $* at ${BASH_SOURCE[2]}:${BASH_LINENO[1]}\033[0m"
+        fi
+    fi
+    builtin return $code
+  }
+
   import(){
     local name="$1"
     source "${BASH_SOURCE[0]%/*}/$name"
