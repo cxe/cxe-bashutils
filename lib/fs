@@ -32,7 +32,7 @@
 
   is_dir(){ [ -d "$1" ]; }
 
-  is_link(){ [ -l "$1" ]; }
+  is_link(){ [ -L "$1" ]; }
 
   is_file(){ [ -f "$1" ]; }
 
@@ -90,7 +90,7 @@
         else
           result[port]="${default_scheme_port["${result[scheme]}"]}"
         fi
-        
+
         result[tld]=".${result[hostname]##*.}"
         result[domain]="${result[hostname]%.*}" && result[domain]="${result[domain]##*.}${result[tld]}"
         result[subdomain]="${result[hostname]//.${result[domain]}/}"
@@ -190,7 +190,7 @@
   dir_containing() {
       local stop=""; [[ "$1" = --stop=* ]] && { stop="$( realpath "${1/--stop=/}" )"; shift; }
       [ "$1" ] || return 2
-      local d="$( realpath "${2:-"$PWD"}" )"
+      local d; d="$( realpath "${2:-"$PWD"}" )"
       while [ "$d" ] && [ "$d" != "$stop" ] && [ ! -e "$d/$1" ]; do d="${d%/*}"; done
       [ -e "$d/$1" ] && echo "${d:-/}" || return 4
   }
@@ -198,7 +198,7 @@
   # @usage FOO="$(fs_uward foo.txt)"
   # @alias readUpwardFile findUpwardFile
   fs_upward() {
-      echo "$(f=/$1; d="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"; while [ "$d" != "/" ]; do [ -f "$d$f" ] && { echo "$d$f"; return; }; d="$(dirname "$d")"; done)"
+      echo "$(f=/$1; d="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit $? ; pwd -P )"; while [ "$d" != "/" ]; do [ -f "$d$f" ] && { echo "$d$f"; return; }; d="$(dirname "$d")"; done)"
   }
 
   # download a file (unzip gz)
@@ -206,7 +206,7 @@
   # todo: tar -xf archive.tar.gz
   download(){
     declare -A url && url_parse -n url "$1"
-    declare fso="${2:-$PWD}" 
+    declare fso="${2:-$PWD}"
     while true; do
         if [ -f "$fso" ]; then
             return 2

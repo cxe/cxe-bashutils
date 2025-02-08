@@ -62,4 +62,3 @@ declare -F version_parse >/dev/null 2>/dev/null || {
     }
 
 }
-version_compatible 2.3.3 '1.4.0 - 2.0.0 ' && echo compatible || echo incompatible

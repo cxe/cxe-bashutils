@@ -12,7 +12,7 @@ declare -F args >/dev/null 2>/dev/null || {
               --) a+=("${@:((i+1))}") && break;;
               --*=*) k="${v:2}" && k="${k%%=*}" && o["$k"]="${v#*=}";;
               --*) k="${v:2}" && o["$k"]="$k";;
-              -[[:alpha:]]*) ;;
+              -[[:alpha:]]*) ;; # todo
               *) a+=("$v");;
           esac
       done
@@ -22,9 +22,9 @@ declare -F args >/dev/null 2>/dev/null || {
     declare -i code="${1:-0}"; shift
     if [ "$*" ]; then
         if [[ $code -gt 0 ]]; then
-            >&2 echo -e "\033[31mSuccess $* at ${BASH_SOURCE[2]}:${BASH_LINENO[1]}\033[0m"
-        else
             >&2 echo -e "\033[31mError #$errno: $* at ${BASH_SOURCE[2]}:${BASH_LINENO[1]}\033[0m"
+        else
+            >&2 echo -e "\033[36m$*\033[0m"
         fi
     fi
     builtin return $code
@@ -68,16 +68,16 @@ declare -F args >/dev/null 2>/dev/null || {
   # read a line from a file
   # @param 1: line number (if none provided use calling line)
   # @param 2: file name (if none provided use current)
-  readline(){ declare -a l && readarray -t l <"${2:-$BASH_SOURCE}" && echo "${l[${1:-$BASH_LINENO}-1]}"; }
+  readline(){ declare -a l && readarray -t l <"${2:-"${BASH_SOURCE[0]}"}" && echo "${l[${1:-${BASH_LINENO[0]}}-1]}"; }
 
   # terminal interaction functions
   is_terminal() { [[ -t 1 || -z ${TERM} ]] && return 0 || return 1; }
 
   echorun(){
-    cmd="$1"
-    args="${@:2}"
-    >&2 echo -e "\033[1;36m${cmd}\033[0;36m ${args}\033[0m"
-    [ -z $DRY ] && $cmd $args
+    declare cmd="$1"
+    declare -a args=("${@:2}")
+    >&2 echo -e "\033[1;36m${cmd}\033[0;36m ${args[*]}\033[0m"
+    [ -z "$DRY" ] && $cmd "${args[@]}"
   }
 
   fail(){
