@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+declare -F debug_imports >/dev/null 2>/dev/null || {
+
+    source "${BASH_SOURCE[0]%/*}/fs"
+
+    # list scripts that are currently loaded
+    debug_imports(){
+        /usr/bin/env bash -lixc exit 2>&1 | sed -n 's/^+* \(source\|\.\) //p'
+    }
+
+    # list scripts that define a variable
+    # @usage: e.g. `debug_varfile PATH`
+    debug_varfile(){
+        /usr/bin/env bash -lixc exit 2>&1 | sed -n 's/^+* \(source\|\.\) //p' | while read f ; do
+            local data="$( fs_data "$f" )"
+            if [[ "$data" == *"$1"=* ]]; then echo "$f"; fi
+        done
+    }
+
+}
+
+debug_varfile PATH
