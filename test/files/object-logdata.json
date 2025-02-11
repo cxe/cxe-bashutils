@@ -1,0 +1,50 @@
+{
+  "insertId": "abc123-def456",
+  "logName": "projects/my-gcp-project/logs/app-log",
+  "resource": {
+    "type": "gce_instance",
+    "labels": {
+      "instance_id": "987654321",
+      "zone": "us-central1-a",
+      "project_id": "my-gcp-project"
+    }
+  },
+  "timestamp": "2025-02-10T12:34:56.789Z",
+  "severity": "ERROR",
+  "labels": {
+    "environment": "production",
+    "service": "backend-api",
+    "version": "1.2.3"
+  },
+  "httpRequest": {
+    "requestMethod": "POST",
+    "requestUrl": "https://api.example.com/orders",
+    "status": 500,
+    "responseSize": "3456",
+    "latency": "0.543s",
+    "userAgent": "Mozilla/5.0",
+    "remoteIp": "203.0.113.42",
+    "referer": "https://example.com/checkout"
+  },
+  "trace": "projects/my-gcp-project/traces/abc123456",
+  "spanId": "def7890",
+  "receiveTimestamp": "2025-02-10T12:34:57.123Z",
+  "jsonPayload": {
+    "message": "Internal Server Error: Unable to process order",
+    "errorDetails": {
+      "code": "ORDER_PROCESSING_FAILED",
+      "reason": "Database timeout",
+      "stackTrace": [
+        "com.example.service.OrderService.processOrder(OrderService.java:123)",
+        "com.example.controller.OrderController.submitOrder(OrderController.java:56)",
+        "org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1000)"
+      ]
+    },
+    "user": {
+      "id": "user-789",
+      "email": "user@example.com",
+      "role": "customer"
+    },
+    "correlationId": "xyz-456-789"
+  }
+}
