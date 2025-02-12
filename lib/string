@@ -12,6 +12,11 @@ str_trim() {
   [ "$ref" ] || echo "$v";
 }
 
+str_replace(){ echo "${1//$2/$3}"; }
+
+
+str_length() { echo "${#1}"; }
+
 # @return uppercase string
 # @arg $1 string
 # @option -n nameref
@@ -33,6 +38,35 @@ str_repeat(){
   if [ "$2" == '' ] || (( $1 < 1 )); then return 1; fi
   v="$2" && while (( ${#v} < $1 )); do v="$v$v"; done; v="${v:0:$1}"
   [ "$ref" ] || echo -n "$v"
+}
+
+str_split() {
+    IFS="$2" read -ra parts <<< "$1"
+    printf "%s\n" "${parts[@]}"
+}
+
+str_slugify() {
+    echo "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g' | sed 's/^-//;s/-$//'
+}
+
+str_password(){
+    tr -dc "${2:-'A-Za-z0-9!@#$%^&*()_+'}" < /dev/urandom | head -c "$1"
+}
+
+to_base64() {
+    echo -n "$*" | base64
+}
+
+from_base64() {
+    echo -n "$*" | base64 --decode
+}
+
+hash_sha256() {
+    echo -n "$*" | sha256sum | awk '{print $*}'
+}
+
+is_ip() {
+    [[ "$1" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] && echo "Valid" || echo "Invalid"
 }
 
 is_email() {
