@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# cross platform polyfill for 'open' (to open a file in the associated app, e.g. the browser)
+# @usage `open http://example.com`
+declare -F open &>/dev/null || {
+    if command -v open &>/dev/null; then
+        open(){ command open "$@"; }
+    elif command -v xdg-open &>/dev/null; then
+        open(){ xdg-open "$@"; }
+    elif command -v start &>/dev/null; then
+        open(){ start "$@"; }
+    elif [[ "$OSTYPE" == "cygwin" || "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+        open(){ if [[ "$1" = *://* ]]; then cmd.exe /c start "$@"; else explorer.exe "$@"; fi; }
+    else
+        open(){ echo "please manually open $@"; }
+    fi
+}
+
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && [ "$*" ] && open "$@"
