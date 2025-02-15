@@ -1,4 +1,5 @@
 {
    "name": "@cxe/bashutils",
-   "version": "0.2.0"
+   "description": "bash utility functions",
+   "version": "0.2.1"
 }
