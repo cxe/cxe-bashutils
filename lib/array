@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-source "${BASH_SOURCE[0]%/*}/typeof"
-
+# helper function for working with arrays
 # @usage:
 # - define an array with initial items:      array MYARRAY = "item 0" [...item-n]
 # - append one or more items:    array MYARRAY push item-0 [,...item-n]
@@ -9,39 +8,45 @@ source "${BASH_SOURCE[0]%/*}/typeof"
 # - remove all items:    array clear MYARRAY
 # - remove item(s) from beginning of array:   array pop MYARRAY [amount]
 # - print array / hashmap contents to stdout:    array_print MYARRAY
+# - check if variable is an array/hashmap:    array MYARRAY exists
 # - remove item(s) from end of array:    array pop MYARRAY [amount] => ARRAY_ITEM contains popped items and array length reduced by amount
 #
 # e.g.: array A = "0 1" 2 34 && array A print
-if typeof array != callable; then
+command -v array &>/dev/null || {
     array(){
-        typeof "$1" is varname && local -r result_var="$1" && local -n result="$1" && shift
+        local result_var; [[ "$1" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] && local -r result_var="$1" && local -n result="$1" && shift
+        [ "$result_var" ] || return 1
         local -r cmd="$1" && shift
         case "$cmd" in
             =)
                 result=("$@") ;;
             push|append)
-                [ $# == 0 ] || result=("${result[@]}" "$@");;
+                [ $# == 0 ] || result=("${result[@]}" "$@") ;;
             pop)
-                declare -agx removed_items=(); declare -ir count=${1:-1}
+                declare -agx removed_items=();
+                local -i count=${1:-1} max=${#result[@]}
+                [[ $count -gt $max ]] && count=$max
                 if [[ $count -gt 0 ]]; then
                     removed_items=("${result[@]:((0-$count))}")
-                    result=("${result[@]:0:((${#result[@]}-count))}")
+                    result=("${result[@]:0:(($max-count))}")
                 fi ;;
             unshift|prepend)
-                [ $# == 0 ] || result=("$@" "${result[@]}");;
+                [ $# == 0 ] || result=("$@" "${result[@]}") ;;
             clear|empty)
-                result=();;
+                result=() ;;
             unique)
                 ;; # TODO
             join|concat)
-                declare d="${1:-" "}"; printf '%s' "${result[@]/#/$d}";;
+                local d="${1:-" "}"; printf '%s' "${result[@]/#/$d}";;
             print)
-                is_array "$result_var" || { echo "${!result}" && return; };
-                declare k; for k in "${!result[@]}"
+                array "$result_var" exists || { echo "${!result}" && return; };
+                local k; for k in "${!result[@]}"
                     do echo "[$k]: ${result["$k"]}"
                 done ;;
             shift)
-                declare -agx removed_items=(); declare -ir count=${1:-1}
+                declare -agx removed_items=();
+                local -i count=${1:-1} max=${#result[@]}
+                [[ $count -gt $max ]] && count=$max
                 if [[ $count -gt 0 ]]; then
                     removed_items=("${result[@]:0:$count}")
                     result=("${result[@]:$count:((${#result[@]}-count))}")
@@ -50,12 +55,10 @@ if typeof array != callable; then
                 declare -ig array_indexof=${#result[@]}
                 while ((--array_indexof > -1)); do [ "${result[i]}" == "$1" ] && return 0; done
                 return 2 ;;
+            exists|is_array)
+                [[ "${#result_var[@]}" -gt 1 ]] && return 0
+                local tmp=() && readarray -d " " -t tmp < <( declare -p "$result_var" )
+                [[ ${tmp[1],,} == *a* ]] ;;
         esac
     }
-
-  # return error if not an array variable (either hashmap or indexed)
-  # @usage:   is_array FOO && echo "the array $_ has ${#FOO[@]} item(s) " || echo "variable value is";
-  # @see typeof
-  is_array(){ declare -n nameref="$1" 2>/dev/null || return 1; [[ "${#nameref[@]}" -gt 1 ]] && return 0; declare tmp=() && readarray -d " " -t "$tmp" < <( declare -p "$1" ); [[ ${tmp[1],,} == *a* ]]; }
-
-fi
+}
