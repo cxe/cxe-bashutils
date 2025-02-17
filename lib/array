@@ -12,7 +12,7 @@
 # - remove item(s) from end of array:    array pop MYARRAY [amount] => ARRAY_ITEM contains popped items and array length reduced by amount
 #
 # e.g.: array A = "0 1" 2 34 && array A print
-command -v array &>/dev/null || {
+declare -F array &>/dev/null || {
     array(){
         local result_var; [[ "$1" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] && local -r result_var="$1" && local -n result="$1" && shift
         [ "$result_var" ] || return 1

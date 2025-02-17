@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-command -v typeof &>/dev/null || {
+declare -F typeof &>/dev/null || {
   # @return: array|boolean|builtin|file|function|number|object|string|undefined
   # @usage:  typeof <varname>|<command> [<matcher>] [<match>]
   #          if matchers are used no output is generated
