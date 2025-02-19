@@ -1,0 +1,139 @@
+{
+  "schemas": [
+    "urn:ietf:params:scim:schemas:core:2.0:User",
+    "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+    "urn:ietf:params:scim:schemas:extension:custom:2.0:User"
+  ],
+  "id": "a72e7c5f-9147-4b3b-b31a-6e0aafed2b7f",
+  "userName": "jdoe",
+  "name": {
+    "formatted": "John Doe",
+    "familyName": "Doe",
+    "givenName": "John",
+    "middleName": "A",
+    "honorificPrefix": "Mr.",
+    "honorificSuffix": "Jr."
+  },
+  "displayName": "John Doe",
+  "nickName": "Johnny",
+  "profileUrl": "https://example.com/profiles/jdoe",
+  "emails": [
+    {
+      "value": "johndoe@example.com",
+      "type": "work",
+      "primary": true
+    },
+    {
+      "value": "j.doe@gmail.com",
+      "type": "personal"
+    }
+  ],
+  "addresses": [
+    {
+      "type": "work",
+      "streetAddress": "123 Business St",
+      "locality": "New York",
+      "region": "NY",
+      "postalCode": "10001",
+      "country": "USA",
+      "formatted": "123 Business St, New York, NY 10001, USA"
+    },
+    {
+      "type": "home",
+      "streetAddress": "456 Home St",
+      "locality": "Los Angeles",
+      "region": "CA",
+      "postalCode": "90001",
+      "country": "USA",
+      "formatted": "456 Home St, Los Angeles, CA 90001, USA"
+    }
+  ],
+  "phoneNumbers": [
+    {
+      "value": "+1-555-555-1234",
+      "type": "work",
+      "primary": true
+    },
+    {
+      "value": "+1-555-555-5678",
+      "type": "mobile"
+    }
+  ],
+  "ims": [
+    {
+      "value": "jdoe_skype",
+      "type": "skype"
+    }
+  ],
+  "photos": [
+    {
+      "value": "https://example.com/photos/jdoe.jpg",
+      "type": "thumbnail"
+    }
+  ],
+  "userType": "Employee",
+  "title": "Senior Software Engineer",
+  "preferredLanguage": "en-US",
+  "locale": "en_US",
+  "timezone": "America/New_York",
+  "active": true,
+  "password": "P@ssw0rd123!",
+  "roles": [
+    {
+      "value": "admin",
+      "display": "Administrator"
+    },
+    {
+      "value": "developer",
+      "display": "Software Developer"
+    }
+  ],
+  "groups": [
+    {
+      "value": "3cbbf76d-5a4b-439e-abc7-d9d31b7fcb42",
+      "display": "Developers",
+      "type": "direct"
+    },
+    {
+      "value": "8b75a655-e6b2-4c5d-b9cb-4e2e2a2e1f9d",
+      "display": "Admins",
+      "type": "indirect"
+    }
+  ],
+  "entitlements": [
+    {
+      "value": "premium_access"
+    },
+    {
+      "value": "cloud_storage_50GB"
+    }
+  ],
+  "x509Certificates": [
+    {
+      "value": "MIIC2DCCAcCgAwIBAgIJAL7tTGlvX...",
+      "type": "X.509"
+    }
+  ],
+  "meta": {
+    "resourceType": "User",
+    "created": "2024-02-19T12:45:00Z",
+    "lastModified": "2024-02-19T15:30:00Z",
+    "location": "https://api.example.com/scim/v2/Users/a72e7c5f-9147-4b3b-b31a-6e0aafed2b7f",
+    "version": "W/\"abc123\""
+  },
+  "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+    "employeeNumber": "123456",
+    "costCenter": "IT-001",
+    "organization": "TechCorp Inc.",
+    "division": "Software Engineering",
+    "department": "Development",
+    "manager": {
+      "value": "5d67fabc-3e6a-4b3b-89de-18e41b92e2c2",
+      "displayName": "Jane Smith"
+    }
+  },
+  "urn:ietf:params:scim:schemas:extension:custom:2.0:User": {
+    "githubUsername": "jdoe_dev",
+    "linkedinProfile": "https://www.linkedin.com/in/johndoe"
+  }
+}
