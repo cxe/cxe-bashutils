@@ -33,10 +33,18 @@ declare -F sys_type >/dev/null 2>/dev/null || {
   }
 
   # return current public IP
+  # see  curl -s "https://ipinfo.io/$1/json"
   sys_ip() {
     local ref=""; [ "$1" == -n ] && { ref="$1" && declare -n v="$2"; shift 2; } || local v
     local v="$( curl -sk https://ipecho.net/plain 2>/dev/null; echo )"
     [ "$ref" ] || echo "$v";
+  }
+
+  # find open ports on a host (without nmap)
+  scan_ports() {
+    for port in {1..1000}; do
+      (echo >/dev/tcp/$1/$port) &>/dev/null && echo "Port $port is open"
+    done
   }
 
 }
