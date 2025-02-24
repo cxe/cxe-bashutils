@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+declare -F git &>/dev/null || {
+    declare -r GIT_BIN="$( command -v git )"
+
+    git(){
+        local opts=() # todo: Parse global options
+
+        case "$1" in
+            pick-exclusive) 
+                local commit="${2:-"$( "$GIT_BIN" log --all --format="%H" --topo-order -n 1 )"}" # if ommitted use latest commit
+                "$GIT_BIN" "${opts[@]}" branch --contains "$commit" &>/dev/null || "$GIT_BIN" "${opts[@]}" cherry-pick -n "$commit"
+                ;;
+    
+            pick-multiple-exclusive) 
+                shift
+                for commit in "$@"; do
+                    "$GIT_BIN" branch --contains "$commit" &>/dev/null || "$GIT_BIN" cherry-pick -n "$commit"
+                done
+                ;;
+            
+            check-clean)
+                if ! "$GIT_BIN" diff --quiet || ! "$GIT_BIN" diff --cached --quiet || [[ -n "$("$GIT_BIN" ls-files --others --exclude-standard)" ]]; then
+                    echo "Error: Repository is not clean." >&2
+                    return 1
+                else
+                    echo "Repository is clean."
+                fi
+                ;;
+            
+            latest-commit)
+                "$GIT_BIN" log --format="%H" -n 1
+                ;;
+
+            latest-commit)
+                "$GIT_BIN" log --all --grep="$2" --format="%H" --topo-order -n 1
+                ;;
+            
+            *) "$GIT_BIN" "$@" ;;
+        esac
+    }
+}
+
+# Execute only if not sourced
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && [ "$*" ] && git "$@"
