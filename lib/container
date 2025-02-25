@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+declare -F container &>/dev/null || {
+  declare -r DOCKER_BIN="$(command -v docker)"
+
+  container() {
+    case "$1" in
+      image)
+        case "$2" in
+          list) "$DOCKER_BIN" images ;;
+          prune) "$DOCKER_BIN" image prune -f ;;
+          *) echo "Usage: container image [list|prune]" ;;
+        esac
+        ;;
+
+      container)
+        case "$2" in
+          list) "$DOCKER_BIN" ps ;;
+          stop|rm) [[ -z "$3" ]] && { echo "Usage: container $2 <id>"; return 1; }
+                   "$DOCKER_BIN" "$2" "$3" ;;
+          *) echo "Usage: container container [list|stop <id>|rm <id>]" ;;
+        esac
+        ;;
+
+      help)
+        cat <<-'EOF'
+			Usage: container [command] [options]
+			Commands:
+			  image list          - List available Docker images
+			  image prune         - Remove unused Docker images
+			  container list      - Show running containers
+			  container stop <id> - Stop a container
+			  container rm <id>   - Remove a container
+			  help                - Show this help message
+		EOF
+        ;;
+
+      *) "$DOCKER_BIN" "$@" ;;
+    esac
+  }
+}
+
+# If sourced, exit quietly; otherwise, execute the function
+return 0 2>/dev/null || container "$@"
