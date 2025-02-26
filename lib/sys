@@ -1,52 +1,58 @@
 #!/usr/bin/env bash
 
-declare -F sys_type >/dev/null 2>/dev/null || {
+# Define the sys function only if it does not exist
+declare -F sys &>/dev/null || {
+  sys() {
+    case "$1" in
+      type) # Check OS type (linux, win, mac, etc.)
+        local os="${OSTYPE,,}"
+        case "${2,,}" in
+          mac|darwin|ios) [[ $os == darwin* ]] ;;
+          linux|unix) [[ $os == *linux* || $os == *bsd* || $os == *solaris* || $os == *android* || $os == *gnu* ]] ;;
+          win) [[ $os == *cygwin* || $os == *mingw* ]] ;;
+          *) [[ $os == $2* ]] ;;
+        esac
+        return $? ;;
 
-  # check if OS is linux, win, ios (or specific OS)
-  sys_type(){
-    local os="${OSTYPE,,}"
-    case "${1,,}" in
-      mac|darwin|ios) [[ $os == darwin* ]] && return 0 ;;
-      linux|unix) if [[ $os == *linux* ]] || [[ $os == *bsd* ]] || [[ $os == *solaris* ]] || [[ $os == *android* ]] || [[ $os == *gnu* ]]; then return 0; fi;;
-      win) if [[ $os == *cygwin* ]] || [[ $os == *mingw* ]]; then return 0; fi;;
-      *) [[ $os == $1* ]] && return 0;;
+      command) # Check if a command is installed
+        type -t -- "$2" &>/dev/null && return 0 || return 1 ;;
+
+      arch) # Get OS architecture
+        uname -m ;;
+
+      path_bin) # Check if a command is a binary in PATH
+        command -v "$2" &>/dev/null ;;
+
+      ip) # Get public IP
+        curl -s "https://ipinfo.io/ip" ;;
+
+      portscan) # Scan open ports on a host (without nmap)
+        for port in {1..1000}; do
+          (echo >/dev/tcp/$2/$port) &>/dev/null && echo "Port $port is open"
+        done ;;
+
+      cpu) # Get CPU info
+        grep -m1 'model name' /proc/cpuinfo 2>/dev/null || sysctl -n machdep.cpu.brand_string ;;
+
+      memory) # Get memory usage
+        free -h 2>/dev/null || vm_stat | awk '/Pages free|Pages active/ {print $0}' ;;
+
+      disk) # Get disk usage
+        df -h / ;;
+
+      process) # Check if a process is running
+        pgrep -x "$2" &>/dev/null && echo "Process '$2' is running" || echo "Process '$2' not found" ;;
+
+      os) # Get OS version
+        uname -a ;;
+
+      network) # Get local network info
+        ip -4 addr show scope global 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' || ifconfig 2>/dev/null | awk '/inet / {print $2}' ;;
+
+      *) echo "Usage: sys [type|command|arch|path_bin|ip|portscan|cpu|memory|disk|process|user|os|network]"; return 1 ;;
     esac
-    return 1
   }
-
-  # check if a command is installed
-  sys_command(){ local t=$( type -t -- "$1"); [[ "$t" != @(file|builtin) ]]; }
-
-  # OS architecture
-  sys_arch(){ uname -m; }
-
-  # check if a command is a path-binary
-  sys_path_bin(){ builtin type -P "$1" &> /dev/null; }
-
-  # return byte size
-  # @usage sys_bits || sys_bits 64
-  sys_bits() {
-    local ref=""; [ "$1" == -n ] && { ref="$1" && declare -n v="$2"; shift 2; } || local v
-    local v=$( getconf LONG_BIT )
-    if [ $# -gt 0 ]; then [[ "$1" == "$bits" ]] && return 0; return 2; fi
-    [ "$ref" ] || echo "$v";
-  }
-
-  # return current public IP
-  # see  curl -s "https://ipinfo.io/$1/json"
-  sys_ip() {
-    local ref=""; [ "$1" == -n ] && { ref="$1" && declare -n v="$2"; shift 2; } || local v
-    local v="$( curl -sk https://ipecho.net/plain 2>/dev/null; echo )"
-    [ "$ref" ] || echo "$v";
-  }
-
-  # find open ports on a host (without nmap)
-  scan_ports() {
-    for port in {1..1000}; do
-      (echo >/dev/tcp/$1/$port) &>/dev/null && echo "Port $port is open"
-    done
-  }
-
 }
 
-sys_ip
+# Execute only if not sourced
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && [ "$*" ] && sys "$@"
