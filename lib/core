@@ -3,7 +3,7 @@
 # core utility functions
 declare -F return &>/dev/null || {
 
-    # allows returning with a stderr comment
+    # wraps builtin return allowing returning with errorstatus AND a stderr comment
     return() {
         declare -i code="${1:-0}" && shift
         if [ "$*" ]; then
@@ -17,14 +17,16 @@ declare -F return &>/dev/null || {
         builtin return "$code"
     }
 
-    # allows exiting with a stderr comment
+    # wraps builtin exit allowing exiting with errorstatus AND a stderr comment
+    # @alias fail
     exit() {
-        declare -i code="${1:-0}" && shift
+        declare -i code="${1:-0}"
+        [[ "$1" = [[:digit:]] ]] && (( $1 > 0 && $1 <= 255 )) && shift
         if [ "$*" ]; then
             if [[ $code -gt 0 ]]; then
-                echo -e "\033[31mFatal Error #$code: $* at ${BASH_SOURCE[2]}:${BASH_LINENO[1]}\033[0m" >&2
+                echo -e "\033[31mFatal Error #$code: $*\033[31;2m at ${BASH_SOURCE[2]}:${BASH_LINENO[1]}\033[0m" >&2
             else
-                echo -e "\033[36m$*\033[0m" >&2
+                echo -e "\033[36;2m$*\033[0m" >&2
             fi
         fi
         builtin exit "$code"
@@ -162,25 +164,47 @@ declare -F return &>/dev/null || {
         [ -z "$DRY" ] && $cmd "${args[@]}"
     }
 
-    fail() {
-        declare -i errno=0
-        [[ "$1" = [[:digit:]] ]] && {
-            (($1 > 0 && $1 <= 255)) && errno="$1"
-            shift
-        }
-        if [[ "$errno" == 0 ]]; then
-            echo >&2 -e "\033[33m$* at ${BASH_SOURCE[1]}:${BASH_LINENO[0]}\033[0m"
-        else
-            echo >&2 -e "\033[31mError #$errno: $* at ${BASH_SOURCE[1]}:${BASH_LINENO[0]}\033[0m"
-        fi
-        exit $errno
-    }
-
     # terminal interaction functions
     is_terminal() { [[ -t 1 && -n ${TERM} ]]; }
 
-    import() {
-        local name="$1"
-        source "${BASH_SOURCE[0]%/*}/$name"
+    # check if a process is running
+    process_running() {
+        local process="$1"
+        if command -v pgrep >/dev/null 2>&1; then
+            pgrep -x "$process" >/dev/null
+        elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
+            tasklist | grep -i "$process" >/dev/null
+        elif command -v ps >/dev/null 2>&1; then
+            ps aux | grep -E "[[:<:]]$process[[:>:]]" | grep -v grep >/dev/null
+        else
+            return 2
+        fi
     }
+
+    # kill a process if running
+    process_kill() {
+        case "$(uname -s)" in
+            Linux|Darwin) pgrep -x "$1" >/dev/null && kill "$(pgrep -x "$1")" 2>/dev/null || echo "Process not found: $1" >&2 ;;
+            CYGWIN*|MINGW*|MSYS*) taskkill //IM "$1.exe" //F 2>/dev/null || echo "Process not found: $1" >&2 ;;
+            *) echo "Unsupported OS" >&2 ;;
+        esac
+    }
+
+    # stacktrace
+    stacktrace() {
+        echo "Stack trace:"
+        for ((i=1; i<=${#FUNCNAME[@]}-1; i++)); do
+            echo "  at ${FUNCNAME[i]} (${BASH_SOURCE[i]}:${BASH_LINENO[i-1]})"
+        done
+    }
+
+    # helper to source/import another file (relative to calling script)
+    import() {
+        local name="$1" script_dir="${BASH_SOURCE[1]%/*}" file_path="$name"
+        [[ "$name" != /* ]] && file_path="$script_dir/$name"
+        [[ -f "$file_path" ]] && source "$file_path" && return 0
+        [[ -f "$file_path.sh" ]] && source "$file_path.sh" && return 0
+        echo -e "\033[31mError: File '$file_path' not found.\033[0m" >&2 && return 1
+    }
+
 }
