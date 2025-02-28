@@ -1,88 +1,186 @@
 #!/usr/bin/env bash
 
-declare -F args >/dev/null 2>/dev/null || {
+# core utility functions
+declare -F return &>/dev/null || {
 
-  # parse CLI arguments, options and flags
-  # @usage: declare -A opts && args "$@"
-  args(){
-      local k v && declare -i i=0 n=${#@} && declare -n o=${_:-opts} a=args && a=()
-      for ((i=1; i<=n; ++i)); do
-          v="${!i}"
-          case "$v" in
-              --) a+=("${@:((i+1))}") && break;;
-              --*=*) k="${v:2}" && k="${k%%=*}" && o["$k"]="${v#*=}";;
-              --*) k="${v:2}" && o["$k"]="$k";;
-              -[[:alpha:]]*) ;; # todo
-              *) a+=("$v");;
-          esac
-      done
-  }
-
-  return(){
-    declare -i code="${1:-0}"; shift
-    if [ "$*" ]; then
-        if [[ $code -gt 0 ]]; then
-            >&2 echo -e "\033[31mError #$errno: $* at ${BASH_SOURCE[2]}:${BASH_LINENO[1]}\033[0m"
-        else
-            >&2 echo -e "\033[36m$*\033[0m"
+    # allows returning with a stderr comment
+    return() {
+        declare -i code="${1:-0}" && shift
+        if [ "$*" ]; then
+            declare -gx RETURN_VALUE="$*"
+            if [[ $code -gt 0 ]]; then
+                echo -e "\033[31mError #$code: $* at ${BASH_SOURCE[2]}:${BASH_LINENO[1]}\033[0m" >&2
+            else
+                echo -e "\033[36m$*\033[0m" >&2
+            fi
         fi
-    fi
-    builtin return $code
-  }
+        builtin return "$code"
+    }
 
-  import(){
-    local name="$1"
-    source "${BASH_SOURCE[0]%/*}/$name"
-  }
+    # allows exiting with a stderr comment
+    exit() {
+        declare -i code="${1:-0}" && shift
+        if [ "$*" ]; then
+            if [[ $code -gt 0 ]]; then
+                echo -e "\033[31mFatal Error #$code: $* at ${BASH_SOURCE[2]}:${BASH_LINENO[1]}\033[0m" >&2
+            else
+                echo -e "\033[36m$*\033[0m" >&2
+            fi
+        fi
+        builtin exit "$code"
+    }
 
+    # wraps builtin trap allowing multiple traps per signal (unless `builtin trap` is used directly)
+    trap() {
+        declare -a args=("$@")
+        declare signal="${args[-1]}" new_trap="${args[@]:0:${#args[@]}-1}"
+        declare existing_trap
 
-  # @return: array|boolean|builtin|file|function|number|object|string|undefined
-  # @usage:  typeof <varname>|<command> [<matcher>] [<match>]
-  #          if matchers are used no output is generated
-  #          eg.: `if typeof foobar == function; then echo foobar is a function; fi`
-  typeof(){
-    local name="$1" data="${!1}" type=string
-    if [[ "$name" =~ ^[_[:alpha:]][_[:alpha:][:digit:]]*$ ]]; then
-      declare -a attr; read -ra attr < <( declare -p "$name" 2>/dev/null )
-      case "${attr[1]}" in
-        '')  type="$( type -t "$name" 2>/dev/null )" || type=undefined;;
-        *A*) type=object; declare -n data="$name";;
-        *a*) type=array; declare -n data="$name";;
-        *i*) type=number;;
-        *) if [[ "$data" == ?(-|+)+([0-9])?(.+([0-9])) ]]; then type=number
-           elif [[ "$data" == @(true|false) ]]; then type=boolean; fi
-      esac
-    fi
-    [ $# -lt 2 ] && echo $type || case "$2" in
-      ===|==|=) [ "$type" == "$3" ] || return 2;;
-      !=) [ "$type" != "$3" ] || return 2;;
-      is) case "$3" in
-          readonly) [[ "${attr[1]}" == *r* ]];;
-          executable) [[ "$type" == @(builtin|file|function) ]];;
-          empty) [ ${#data[@]} == 0 ];;
-        esac ;;
-      =~|matches) [[ "$data" =~ $3 ]];;
-    esac
-  }
+        existing_trap=$(builtin trap -p "$signal" | awk -F"'" '{print $2}')
 
-  # read a line from a file
-  # @param 1: line number (if none provided use calling line)
-  # @param 2: file name (if none provided use current)
-  readline(){ declare -a l && readarray -t l <"${2:-"${BASH_SOURCE[0]}"}" && echo "${l[${1:-${BASH_LINENO[0]}}-1]}"; }
+        if [[ -z "$existing_trap" ]]; then
+            builtin trap "$new_trap" "$signal"
+        else
+            builtin trap "$existing_trap; $new_trap" "$signal"
+        fi
+    }
 
-  # terminal interaction functions
-  is_terminal() { [[ -t 1 || -z ${TERM} ]] && return 0 || return 1; }
+    # parse arguments and options
+    # @usage:   local -A opts=() && local -a args=() && parse "$@" && set -- "${args[@]}"
+    parse() {
+        declare -n _o=opts _a=args && local k f
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+            --*=*)
+                k="${1%%=*}"
+                _o["${k:2}"]="${1#*=}"
+                ;;
+            --*)
+                _o["$1"]=$1
+                [[ "$2" && "$2" != -* ]] && shift
+                ;;
+            -?*)
+                if [[ "$1" =~ ^-[0-9]+([.][0-9]+)?$ ]]; then
+                    _a+=("$1") # allow negative numbers
+                else
+                    f="${1:1}"
+                    while [[ -n "$f" ]]; do
+                        k="${f:0:1}"
+                        f="${f:1}"
+                        if [[ "$f" == =* ]]; then
+                            _o["$k"]="${f:1}"
+                            break
+                        fi
+                        _o["$k"]=true
+                    done
+                fi
+                ;;
+            --)
+                shift && _a+=("$@") && break
+                ;;
+            -) _a+=("$1") ;;
+            *) _a+=("$1") ;;
+            esac
+            shift
+        done
+    }
 
-  echorun(){
-    declare cmd="$1"
-    declare -a args=("${@:2}")
-    >&2 echo -e "\033[1;36m${cmd}\033[0;36m ${args[*]}\033[0m"
-    [ -z "$DRY" ] && $cmd "${args[@]}"
-  }
+    # @usage: stream_into echo
+    stream_into() {
+        command -v "$1" >/dev/null || return 1 "Error: Invalid command"
+        while IFS= read -r -t "${2:-1}" ln; do "$1" "$ln"; done
+    }
 
-  fail(){
-    declare -i errno=0 && [[ "$1" = [[:digit:]] ]] && (( $1 > 0 && $1 <= 255 )) && errno="$1" && shift
-    >&2 echo -e "\033[31mError #$errno: $* at ${BASH_SOURCE[2]}:${BASH_LINENO[1]}\033[0m"
-    exit $errno
-  }
+    # @return: array|boolean|builtin|file|function|number|object|string|undefined
+    # @usage:  typeof <varname>|<command> [<matcher>] [<match>]
+    #          if matchers are used no output is generated
+    #          eg.: `if typeof foobar == function; then echo foobar is a function; fi`
+    typeof() {
+        local name="$1" type="string"
+        declare -a attr
+        read -ra attr < <(declare -p "$name" 2>/dev/null)
+
+        case "${attr[1]}" in
+            '') type="$(type -t "$name" 2>/dev/null || echo "undefined")" ;;
+            *A*) type="object" ;;
+            *a*) type="array" ;;
+            *i*) type="number" ;;
+        esac
+
+        case "$2" in
+            ===|==|=) [[ "$type" == "$3" ]] || return 2 ;;
+            !=) [[ "$type" != "$3" ]] || return 2 ;;
+            is)
+                case "$3" in
+                    readonly) [[ "${attr[1]}" == *r* ]] ;;
+                    executable) [[ "$type" =~ (builtin|file|function) ]] ;;
+                    empty) [[ ${#data[@]} -eq 0 ]] ;;
+                esac ;;
+            =~|matches) [[ "$data" =~ $3 ]] ;;
+        esac
+
+        [[ $# -lt 2 ]] && echo "$type"
+    }
+
+    typeof_alt() {
+        local name="$1" data="${!1}" type=string
+        if [[ "$name" =~ ^[_[:alpha:]][_[:alpha:][:digit:]]*$ ]]; then
+            declare -a attr
+            read -ra attr < <(declare -p "$name" 2>/dev/null)
+            case "${attr[1]}" in
+            '') type="$(type -t "$name" 2>/dev/null)" || type=undefined ;;
+            *A*)
+                type=object
+                declare -n data="$name"
+                ;;
+            *a*)
+                type=array
+                declare -n data="$name"
+                ;;
+            *i*) type=number ;;
+            *) if [[ "$data" == ?(-|+)+([0-9])?(.+([0-9])) ]]; then
+                type=number
+            elif [[ "$data" == @(true|false) ]]; then type=boolean; fi ;;
+            esac
+        fi
+        [ $# -lt 2 ] && echo $type || case "$2" in
+        === | == | =) [ "$type" == "$3" ] || return 2 ;;
+        !=) [ "$type" != "$3" ] || return 2 ;;
+        is) case "$3" in
+            readonly) [[ "${attr[1]}" == *r* ]] ;;
+            executable) [[ "$type" == @(builtin|file|function) ]] ;;
+            empty) [ ${#data[@]} == 0 ] ;;
+            esac ;;
+        =~ | matches) [[ "$data" =~ $3 ]] ;;
+        esac
+    }
+
+    echorun() {
+        declare cmd="$1"
+        declare -a args=("${@:2}")
+        echo >&2 -e "\033[1;36m${cmd}\033[0;36m ${args[*]}\033[0m"
+        [ -z "$DRY" ] && $cmd "${args[@]}"
+    }
+
+    fail() {
+        declare -i errno=0
+        [[ "$1" = [[:digit:]] ]] && {
+            (($1 > 0 && $1 <= 255)) && errno="$1"
+            shift
+        }
+        if [[ "$errno" == 0 ]]; then
+            echo >&2 -e "\033[33m$* at ${BASH_SOURCE[1]}:${BASH_LINENO[0]}\033[0m"
+        else
+            echo >&2 -e "\033[31mError #$errno: $* at ${BASH_SOURCE[1]}:${BASH_LINENO[0]}\033[0m"
+        fi
+        exit $errno
+    }
+
+    # terminal interaction functions
+    is_terminal() { [[ -t 1 && -n ${TERM} ]]; }
+
+    import() {
+        local name="$1"
+        source "${BASH_SOURCE[0]%/*}/$name"
+    }
 }
