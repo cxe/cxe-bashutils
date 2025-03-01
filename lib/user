@@ -6,8 +6,18 @@ declare -F user &>/dev/null || {
         [ "$result_var" ] || return 1
         local -r cmd="$1" && shift
         case "$cmd" in
-            name) result="${SUDO_USER:-${USER:-$USERNAME}}";; # @see whoami, `id -u -n`
+            name) result_var="${SUDO_USER:-${USER:-$USERNAME}}";; # @see whoami, `id -u -n`
             is_root) [ "$UID" ] || declare -gx UID="$( id -u )"; [[ $UID -eq 0 ]] || return 1;; # @alias is_sudo
+            home) result_var="$(eval echo ~$USER)";; # Home directory
+            id) result_var="$(id -u)";; # User ID
+            groups) result_var="$(id -Gn)";; # Groups of the user
+            shell) result_var="$(getent passwd "$USER" | cut -d: -f7)";; # Default shell
+            exists) id "$1" &>/dev/null && result_var=1 || result_var=0;; # Check if user exists
+            add_user) sudo useradd "$1" && result_var=1 || result_var=0;; # Add a new user
+            del_user) sudo userdel "$1" && result_var=1 || result_var=0;; # Delete a user
         esac
     }
 }
+
+# Execute only if not sourced
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && [ "$*" ] && user "$@"
