@@ -1,67 +1,67 @@
-0.0.0 (Valid but uncommon semver)
-1.0.0
-2.1.3
-0.10.123
-10.4.7
-4.5.0-beta.3
-6.2.3-alpha
-7.0.0-rc.2
-9.9.9
-1.0.0-alpha.1
-1.2.3-beta.2
-2.3.4-rc.1
-0.0.2
-5.1.1+build.45
-3.0.0+meta
-4.4.4-pre.1+sha.abcdef
-6.3.2-alpha+20230201
-7.1.1-beta.3+rev.789
-1.0.0-0
-2.2.2-1
-3.3.3-2+build.234
-4.4.4-alpha+exp.sha.5114f85
-5.5.5-beta+build.20130313144700
-6.6.6-rc.4
-7.7.7-alpha.10
-8.8.8-beta.99+exp.567
-9.9.9-rc.123+sha256.12345abc
-10.0.0+release.2025
-0.0.1-alpha.0 (Lowest possible pre-release version)
-1.0.0-alpha (Pre-release without numeric identifier)
-1.0.0-alpha.1 (Pre-release with numeric identifier)
-1.0.0-0.3.7 (Complex pre-release tag)
-2.1.3+build2019 (Build metadata included)
-4.0.0+sha.5114f85 (Git-based metadata)
-3.2.1-beta.5+exp.567 (Both pre-release and build metadata)
-7.0.0-preview.1 (Microsoft's .NET-style pre-release)
-8.0.0-rc.99 (Unusually high release candidate number)
-1.0 (Major.Minor without patch)
-2.5.1.234 (Four-part versioning)
-3.1.15.1234 (Extended build number)
-4.0.0-112 (Version with incremental build number)
-5.2-RELEASE (BSD-style release name)
-6.6-STABLE (Release marked as "stable")
-7.8-DEVELOPMENT (Marked as a dev version)
-8.0.0-LTS (Long-Term Support version)
-9.0.0-enterprise (Commercial license versioning)
-10.0.0-community (Open-source community edition)
-2024.02.08<(YYYY.MM.DD calver)
-2023.12 (Year.Month)
-2025.1.1 (YYYY.M.D)
-24.08.01 (YY.MM.DD)
-2024.02-beta (Year.Month + Pre-release)
-2023.1.0-rc1 (Year-based versioning with RC)
-20240208 (Compact date-based versioning)
-2024.0 (Year.Major)
-21H2 (Windows Update versioning)
-1909 (Windows versioning, YYMM)
-v1.2.3 (Prefixed with "v", common in Git tags)
-v2025.02.08 (Prefixed version with date)
-R4.5.2 (Prefixed release notation)
-version-10.2.1 (Full-word prefix)
-10.2.1-final ("Final" label in versioning)
-1.2.3+meta-data (Hyphen in metadata)
-5.6.0+exp@build (Unusual special character in metadata)
-4.4.4-01 (Leading zero in identifier)
-5.5.5..7 (Double dots, incorrect format but seen in some cases)
-3.4.5.6.7 (Five-part versioning, sometimes used in enterprise software)
+﻿0.0.0;(Valid but uncommon semver)
+1.0.0;
+2.1.3;
+0.10.123;
+10.4.7;
+4.5.0-beta.3;
+6.2.3-alpha;
+7.0.0-rc.2;
+9.9.9;
+1.0.0-alpha.1;
+1.2.3-beta.2;
+2.3.4-rc.1;
+0.0.2;
+5.1.1+build.45;
+3.0.0+meta;
+4.4.4-pre.1+sha.abcdef;
+6.3.2-alpha+20230201;
+7.1.1-beta.3+rev.789;
+1.0.0-0;
+2.2.2-1;
+3.3.3-2+build.234;
+4.4.4-alpha+exp.sha.5114f85;
+5.5.5-beta+build.20130313144700;
+6.6.6-rc.4;
+7.7.7-alpha.10;
+8.8.8-beta.99+exp.567;
+9.9.9-rc.123+sha256.12345abc;
+10.0.0+release.2025;
+0.0.1-alpha.0;(Lowest possible pre-release version)
+1.0.0-alpha;(Pre-release without numeric identifier)
+1.0.0-alpha.1;(Pre-release with numeric identifier)
+1.0.0-0.3.7;(Complex pre-release tag)
+2.1.3+build2019;(Build metadata included)
+4.0.0+sha.5114f85;(Git-based metadata)
+3.2.1-beta.5+exp.567;(Both pre-release and build metadata)
+7.0.0-preview.1;(Microsoft's .NET-style pre-release)
+8.0.0-rc.99;(Unusually high release candidate number)
+1.0;(Major.Minor without patch)
+2.5.1.234;(Four-part versioning)
+3.1.15.1234;(Extended build number)
+4.0.0-112;(Version with incremental build number)
+5.2-RELEASE;(BSD-style release name)
+6.6-STABLE;"(Release marked as 'stable')"
+7.8-DEVELOPMENT;(Marked as a dev version)
+8.0.0-LTS;(Long-Term Support version)
+9.0.0-enterprise;(Commercial license versioning)
+10.0.0-community;(Open-source community edition)
+2024.02.08<;(YYYY.MM.DD calver)
+2023.12;(Year.Month)
+2025.1.1;(YYYY.M.D)
+24.08.01;(YY.MM.DD)
+2024.02-beta;(Year.Month + Pre-release)
+2023.1.0-rc1;(Year-based versioning with RC)
+20240208;(Compact date-based versioning)
+2024.0;(Year.Major)
+21H2;(Windows Update versioning)
+1909;(Windows versioning, YYMM)
+v1.2.3;"(Prefixed with 'v', common in Git tags)"
+v2025.02.08;(Prefixed version with date)
+R4.5.2;(Prefixed release notation)
+version-10.2.1;(Full-word prefix)
+10.2.1-final;(Final label in versioning)
+1.2.3+meta-data;(Hyphen in metadata)
+5.6.0+exp@build;(Unusual special character in metadata)
+4.4.4-01;(Leading zero in identifier)
+5.5.5..7;(Double dots, incorrect format but seen in some cases)
+3.4.5.6.7;(Five-part versioning, sometimes used in enterprise software)
