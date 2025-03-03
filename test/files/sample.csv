@@ -1,0 +1,12 @@
+ID,Name,Message,Notes
+1,John Doe,"Hello, World","This is a test"
+2,Jane Smith,"A field with a newline
+inside","Another, example"
+3,Emily Johnson,"""Quoted"" text","Edge,case"
+4,Bob Brown,Just text,"No quotes here"
+5,Alice,"Comma, inside","Mixed ""quotes"", newlines
+
+and more"
+6,,Empty Name,"Field with no value"
+7,Steve Rogers,42,"Number as string"
+8,"Special@Chars","$%^&*!","Symbols inside fields"
