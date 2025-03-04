@@ -5,7 +5,7 @@ declare -F return &>/dev/null || {
 
     # wraps builtin return allowing returning with errorstatus AND a stderr comment
     return() {
-        declare -i code="${1:-0}" && shift
+        declare -i code="${1:-0}" && [[ "${1:0:1}" = [[:digit:]] ]] && (( $1 > 0 && $1 <= 255 )) && shift
         if [ "$*" ]; then
             declare -gx RETURN_VALUE="$*"
             if [[ $code -gt 0 ]]; then
@@ -20,8 +20,7 @@ declare -F return &>/dev/null || {
     # wraps builtin exit allowing exiting with errorstatus AND a stderr comment
     # @alias fail
     exit() {
-        declare -i code="${1:-0}"
-        [[ "$1" = [[:digit:]] ]] && (( $1 > 0 && $1 <= 255 )) && shift
+        declare -i code="${1:-0}" && [[ "${1:0:1}" = [[:digit:]] ]] && (( $1 > 0 && $1 <= 255 )) && shift
         if [ "$*" ]; then
             if [[ $code -gt 0 ]]; then
                 echo -e "\033[31mFatal Error #$code: $*\033[31;2m at ${BASH_SOURCE[2]}:${BASH_LINENO[1]}\033[0m" >&2

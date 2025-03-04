@@ -3,66 +3,90 @@
 # unit testing for bash scripts
 # @see: also https://github.com/kward/shunit2
 declare -F describe >/dev/null 2>/dev/null || {
-    source "${BASH_SOURCE[0]%/*}/string"
+    declare -gxa TEST_NAME=() TEST_STATE=() TEST_DEPTH=() TEST_CURRENT=()
+    declare -gx TEST_INDENT=""
+    declare -A TEST_RESULTS=([good]=0 [skip]=0 [fail]=0)
 
-    declare -gx TEST_PATH=""
-    declare -gxa TEST_GROUP=() TEST_NAME=()
-    declare -gxA TEST_ERROR=() TEST_COUNT=()
-    declare -a TEST_OUTPUT=()
+    trap describe_summary EXIT
 
-    # print reverse output (nested groups)
-    trap test_exit EXIT && test_exit(){
-        local s i=${#TEST_OUTPUT[@]}
-        while ((--i > -1)); do >&2 echo -e "${TEST_OUTPUT[i]}\033[0m"; done
+    describe() {
+        declare -p TEST_STATE &>/dev/null || {
+            declare -gxa TEST_NAME=() TEST_STATE=() TEST_DEPTH=() TEST_CURRENT=()
+            declare -gx TEST_INDENT=""
+            trap describe_end EXIT
+        }
+        if [[ $# -gt 0 ]]; then # new describe block
+            local name="${TEST_CURRENT+$TEST_CURRENT.}${2+"- $2"}$1"
+            TEST_CURRENT=("$name" "${TEST_CURRENT[@]}")
+            TEST_NAME=("$name" "${TEST_NAME[@]}")
+            TEST_STATE=(0 "${TEST_STATE[@]}")
+            TEST_DEPTH=($(( ${#TEST_CURRENT[@]} - 1 )) "${TEST_DEPTH[@]}")
+        else # end describe block
+            TEST_CURRENT=("${TEST_CURRENT[@]:1}")
+            TEST_INDENT="${TEST_INDENT:1}"
+        fi
     }
+    it() { describe "" "$*"; }
+    ti() { describe; }
 
-    # start of a description group
-    # todo: [WIP]
-    describe(){
-        local -r test_group="$*"
-        TEST_PATH="$TEST_PATH/$test_group"
-        TEST_GROUP=("$test_group" "${TEST_GROUP[@]}")
-        TEST_ERROR["$TEST_PATH"]=""
-        TEST_COUNT["$TEST_PATH"]=0
-    }
+    expect() {
+        local actual="$1" operator="$2" expected="$3"
+        TEST_STATE[0]=-1
 
-    # end of a description group
-    # todo: [WIP]
-    ebircsed(){
-        declare -ir group_depth=${#TEST_GROUP[@]}
-        local indent && str_repeat -n indent $(( group_depth -1 )) '  '
-        # todo determine failure TEST_ERROR["$TEST_PATH"]
-        TEST_OUTPUT+=("\033[31m$indent✘ ${TEST_GROUP[0]}")
-        TEST_GROUP=("${TEST_GROUP[@]:1:(($group_depth-1))}");
-    }
-
-    # todo: [WIP]
-    # @alias: 'test' (in non bash contexts)
-    it(){
-        TEST_NAME=("$*" "${TEST_NAME[@]}")
-        TEST_COUNT["$TEST_PATH"]=$(( ${TEST_COUNT["$TEST_PATH"]} + 1 ))
-        # todo: start output capturing
-    }
-
-    # todo: [WIP]
-    ti(){
-        TEST_NAME=("${TEST_NAME[@]:1:((${#TEST_NAME[@]}-1))}");
-        # todo: use captured output
-        # todo determine failure TEST_ERROR["$TEST_PATH"]=$? ++
-    }
-
-    # assertions
-    # todo: [WIP]
-    expect(){
-        local actual="$1"  matcher="$2" expectation="$3"
-        case "" in
-            toBe|toEqual|==)
-                [ "$actual" == "$expectation" ] || return 1
-                ;;
+        case "$operator" in
+            toBe|toEqual) [[ "$actual" == "$expected" ]] && TEST_STATE[0]=0 ;;
+            toBeLessThan) (( actual < expected )) && TEST_STATE[0]=0 ;;
+            toBeGreaterThan) (( actual > expected )) && TEST_STATE[0]=0 ;;
         esac
+        (( TEST_STATE[0] != 0 )) && TEST_STATE[0]=1  # Mark failed test
+    }
+    assert(){ expect "$@"; }
+
+    describe_parent_state() {
+        local -i i="$1" depth="${#TEST_DEPTH[@]}" childState="$2"
+        for (( ; i < depth; ++i )); do
+            (( TEST_STATE[i] < childState )) && TEST_STATE[i]=$childState
+            (( TEST_DEPTH[i] == 0 )) && break
+        done
     }
 
-    # aliases
-    assert(){ expect "$@"; }
-    describe_end(){ ebircsed "$@"; }
+    describe_summary() {
+        local -i i="${#TEST_NAME[@]}" total_tests=0
+        while (( --i >= 0 )); do
+            local name="${TEST_NAME[i]##*.}"
+            local leaf=""; [[ "${name:0:1}" == "-" ]] && leaf=1
+
+            case "${TEST_STATE[i]}" in
+                -1) [[ "$leaf" ]] && describe_parent_state "$i" -1 || (( ++TEST_RESULTS[skip] )) ;;
+                0)  [[ "$leaf" ]] && describe_parent_state "$i" 0  || (( ++TEST_RESULTS[good] )) ;;
+                *)  [[ "$leaf" ]] && describe_parent_state "$i" "${TEST_STATE[i]}" || (( ++TEST_RESULTS[fail] )) ;;
+            esac
+        done
+
+        total_tests=$(( TEST_RESULTS[good] + TEST_RESULTS[skip] + TEST_RESULTS[fail] ))
+        
+        echo -en "\n$total_tests Test(s):"
+        [[ ${TEST_RESULTS[skip]} -gt 0 ]] && echo -en " \033[33m${TEST_RESULTS[skip]} skipped\033[0m"
+        [[ ${TEST_RESULTS[fail]} -gt 0 ]] && echo -en " \033[31m${TEST_RESULTS[fail]} failed\033[0m"
+        [[ ${TEST_RESULTS[good]} -gt 0 ]] && echo -en " \033[32m${TEST_RESULTS[good]} successful\033[0m"
+        echo -e "\033[0m\n"
+
+        describe_results
+    }
+
+    describe_results() {
+        local -i i="${#TEST_NAME[@]}"
+        while (( --i >= 0 )); do
+            local name="${TEST_NAME[i]##*.}"
+            local indent="                  " && indent="${indent:0:((2 * TEST_DEPTH[i]))}"
+            local bullet=""
+            local leaf=$([[ "${name:0:1}" == "-" ]] && echo 1 || echo "")
+
+            case "${TEST_STATE[i]}" in
+                -1) bullet="☐" ; echo -e "\033[33m${bullet}${indent} ${name} (skipped)\033[0m" >&2 ;;
+                0)  bullet="🗹" ; echo -e "\033[32m${bullet}${indent} ${name}\033[0m" >&2 ;;
+                *)  bullet="☒" ; echo -e "\033[31m${bullet}${indent} ${name} ${leaf:+(failed with #${TEST_STATE[i]})}\033[0m" >&2 ;;
+            esac
+        done
+    }
 }
