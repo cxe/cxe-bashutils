@@ -10,6 +10,10 @@ declare -F git &>/dev/null || {
         local opts=() # Reserved for future global options
 
         case "$1" in
+            root-dir)
+                git rev-parse --show-toplevel
+                ;;
+
             contributors-by-commits)
                 # Outputs contributors as a JSON array
                 echo "["$(git log --all --format='%aN <%aE>' | sort -u | sed 's/^/"/;s/$/"/' | paste -sd, -)"]"
