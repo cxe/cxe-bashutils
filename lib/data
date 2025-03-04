@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+declare -F data &>/dev/null || {
+    data() {
+        local result_name="" result_data timeout=2 verbose=false
+
+        declare -a args=()
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                -n)
+                    declare result_name="$2" && declare -n result_data="$result_name" && shift
+                    ;;
+                --timeout|-t)
+                    timeout=$2 && shift
+                    ;;
+                --verbose|-v)
+                    verbose=true
+                    trap "set +x" RETURN && { export PS4="\033[90m+ \$(date +%H:%M:%S) \$BASH_SOURCE:\$LINENO:\$FUNCNAME() \$ \033[0m"; set -x; }
+                    ;;
+                *)
+                    args+=("$1")
+                    ;;
+            esac
+            shift
+        done
+        set -- "${args[@]}" && result_data=""
+
+        case "$1" in
+            status)
+                local host="$2"
+                result_data="$( curl -s -o /dev/null -w "%{http_code}" --max-time $timeout --keepalive-time $timeout "$host" )"
+                ;;
+            content)
+                local host="$2"
+                result_data="$( curl -s --max-time $timeout "$host" )"
+                ;;
+            await)
+                local host="$2" interval=${2:-1}
+                while true; do
+                    result_data="$( curl -s -o /dev/null -w "%{http_code}" --max-time $timeout --keepalive-time $timeout "$host" )"
+                    [[ "$result_data" != "000" ]] && { result_data="$result_data $host" && break; } || sleep $interval
+                done
+                ;;
+        esac
+        [ "$result_name" ] || { [ "$result_data" ] && echo "$result_data"; }
+    }
+}
+
+# Execute only if not sourced
+[[ "${BASH_SOURCE[0]}" == "$0" ]] || [ "$*" ] && data "$@"
+
+
+
+
