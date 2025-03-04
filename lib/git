@@ -1,45 +1,78 @@
 #!/usr/bin/env bash
 
+
 declare -F git &>/dev/null || {
-    declare -r GIT_BIN="$( command -v git )"
+
+    # Ensure git is available
+    declare -r GIT_BIN="$(command -v git)" || { echo "Error: git not found in PATH." >&2; exit 1; }
 
     git(){
-        local opts=() # todo: Parse global options
+        local opts=() # Reserved for future global options
 
         case "$1" in
-            pick-exclusive) 
-                local commit="${2:-"$( "$GIT_BIN" log --all --format="%H" --topo-order -n 1 )"}" # if ommitted use latest commit
-                "$GIT_BIN" "${opts[@]}" branch --contains "$commit" &>/dev/null || "$GIT_BIN" "${opts[@]}" cherry-pick -n "$commit"
+            contributors-by-commits)
+                # Outputs contributors as a JSON array
+                echo "["$(git log --all --format='%aN <%aE>' | sort -u | sed 's/^/"/;s/$/"/' | paste -sd, -)"]"
                 ;;
-    
-            pick-multiple-exclusive) 
+
+            pick-ifmissing) 
+                local commit="${2:-$("$GIT_BIN" log --all --format="%H" --topo-order -n 1)}"
+                if "$GIT_BIN" branch --contains "$commit" &>/dev/null; then
+                    echo "Commit $commit is already in a branch."
+                else
+                    "$GIT_BIN" cherry-pick -n "$commit"
+                fi
+                ;;
+
+            pick-ifmissing-multiple) 
                 shift
+                if [[ $# -eq 0 ]]; then
+                    echo "Error: No commits provided for pick-multiple-exclusive." >&2
+                    return 1
+                fi
                 for commit in "$@"; do
-                    "$GIT_BIN" branch --contains "$commit" &>/dev/null || "$GIT_BIN" cherry-pick -n "$commit"
+                    if ! "$GIT_BIN" branch --contains "$commit" &>/dev/null; then
+                        "$GIT_BIN" cherry-pick -n "$commit"
+                    else
+                        echo "Skipping $commit: Already contained in a branch."
+                    fi
                 done
                 ;;
-            
+
             check-clean)
                 if ! "$GIT_BIN" diff --quiet || ! "$GIT_BIN" diff --cached --quiet || [[ -n "$("$GIT_BIN" ls-files --others --exclude-standard)" ]]; then
-                    echo "Error: Repository is not clean." >&2
+                    echo "Error: Repository is not clean. Commit or stash changes before proceeding." >&2
                     return 1
                 else
                     echo "Repository is clean."
                 fi
                 ;;
-            
-            latest-commit)
-                "$GIT_BIN" log --format="%H" -n 1
-                ;;
 
             latest-commit)
+                if [[ -z "$2" ]]; then
+                    echo "Error: Provide a search term for latest-commit." >&2
+                    return 1
+                fi
                 "$GIT_BIN" log --all --grep="$2" --format="%H" --topo-order -n 1
                 ;;
-            
-            *) "$GIT_BIN" "$@" ;;
+
+            current-branch)
+                "$GIT_BIN" rev-parse --abbrev-ref HEAD
+                ;;
+
+            commit)
+                "$GIT_BIN" rev-parse --short HEAD
+                ;;
+
+            repository-url)
+                "$GIT_BIN" remote get-url origin 2>/dev/null || { echo "Error: No remote repository found." >&2; return 1; }
+                ;;
+
+            *) 
+                "$GIT_BIN" "$@" 
+                ;;
         esac
     }
 }
-
 # Execute only if not sourced
 [[ "${BASH_SOURCE[0]}" == "$0" ]] && [ "$*" ] && git "$@"
