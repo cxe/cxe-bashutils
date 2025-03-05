@@ -72,6 +72,36 @@ declare -F git &>/dev/null || {
                 "$GIT_BIN" remote get-url origin 2>/dev/null || { echo "Error: No remote repository found." >&2; return 1; }
                 ;;
 
+            latest_repodir)
+                # @usage: git_latest_dir [-n var] <reponame>
+                local ref var time subdir config latest_time=0 lastmoddir=""
+
+                # Handle optional variable reference
+                if [[ $1 == "-n" ]]; then
+                    ref=1
+                    declare -n var="$2"
+                    shift 2
+                else
+                    var=""
+                fi
+
+                # Ensure a search needle is provided
+                [[ -z $1 ]] && return 1
+                local needle="$1"
+
+                # Search for matching Git repositories
+                while read -r config; do
+                    subdir="${config%/.git/config}"
+                    grep -q "$needle" "$config" || continue
+                    time=$(git -C "$subdir" log -1 --format=%ct 2>/dev/null) || continue
+                    (( time > latest_time )) && { latest_time=$time; lastmoddir="$subdir"; }
+                done < <(find "${0%/*}" -maxdepth 3 -type f -path "*/.git/config")
+
+                if [[ -n $lastmoddir ]]; then
+                    lastmoddir=$(realpath "$lastmoddir")
+                    [[ $ref ]] && var="$lastmoddir" || echo "$lastmoddir"
+                fi
+                ;;
             *) 
                 "$GIT_BIN" "$@" 
                 ;;
