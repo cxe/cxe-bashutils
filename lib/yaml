@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+declare -F yaml &>/dev/null || {
+
+    yaml() {
+        local ref=""; [ "$1" == -n ] && { ref="$1"; declare -n var="$2"; shift 2; } || local var
+        local cmd="$1" && shift
+
+        case "$cmd" in
+            parse)
+                local file="$1"
+                [[ ! -f "$file" ]] && { echo "Error: File '$file' not found"; return 1; }
+
+                local indent_level=0 current_key="" parent_key="" is_multiline=0 multiline_value=""
+                local list_index=0 inside_list=0 list_prefix=""
+
+                while IFS= read -r line || [[ -n "$line" ]]; do
+                    # Trim leading and trailing spaces
+                    line="${line#"${line%%[![:space:]]*}"}"  # Trim leading
+                    line="${line%"${line##*[![:space:]]}"}"  # Trim trailing
+                    
+                    # Ignore comments and empty lines
+                    [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
+
+                    # Handle indentation levels
+                    local current_indent="${#line}"
+                    if [[ "$line" =~ ^[[:space:]]*[^-] ]]; then
+                        indent_level=$current_indent
+                    fi
+
+                    # Handle lists (flatten into indexed keys)
+                    if [[ "$line" =~ ^-[[:space:]]*(.*)$ ]]; then
+                        inside_list=1
+                        [[ "$current_key" == "$parent_key" ]] && list_index=$((list_index + 1)) || list_index=0
+                        list_prefix="${parent_key}_${list_index}"
+                        value="${BASH_REMATCH[1]}"
+                        eval "${list_prefix}=\"$value\""
+                        continue
+                    fi
+
+                    # Handle key-value pairs
+                    if [[ "$line" =~ ^([^:]+):[[:space:]]*(.*)$ ]]; then
+                        local key="${BASH_REMATCH[1]}"
+                        local value="${BASH_REMATCH[2]}"
+
+                        # Normalize key (replace dots and spaces with underscores)
+                        key="${key//./_}" && key="${key// /_}"
+
+                        # Handle nested keys (prefix parent key)
+                        [[ -n "$parent_key" ]] && key="${parent_key}_${key}"
+
+                        # Handle multiline values (`|` or `>`)
+                        if [[ "$value" == "|" || "$value" == ">" ]]; then
+                            is_multiline=1
+                            multiline_value=""
+                            parent_key="$key"
+                            continue
+                        fi
+
+                        # Assign value if not multiline
+                        eval "$key=\"$value\""
+                        parent_key="$key"
+                        continue
+                    fi
+
+                    # Handle multiline content
+                    if (( is_multiline )); then
+                        if [[ -n "$line" ]]; then
+                            multiline_value+="${line}\n"
+                        else
+                            eval "$parent_key=\"${multiline_value%\\n}\""
+                            is_multiline=0
+                            multiline_value=""
+                        fi
+                        continue
+                    fi
+                done < "$file"
+
+                [ "$ref" ] || echo "Parsed YAML successfully"
+                ;;
+            
+            extract)
+                local file="$1" find="$2"
+                [[ -z "$find" ]] && { echo "Error: Missing key for extraction"; return 1; }
+
+                # Declare an associative array
+                declare -A tmp
+                yaml -n tmp parse "$file"
+
+                # Return the extracted value
+                [ -n "${tmp["$find"]}" ] && var="${tmp["$find"]}"
+                [ "$ref" ] || echo "$var"
+                ;;
+        esac
+    }
+}
+
+# Execute only if not sourced
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && [ "$*" ] && yaml "$@"
