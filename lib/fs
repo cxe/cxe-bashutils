@@ -234,4 +234,22 @@
     _d="$(<"$f")"
     echo "$_d"
   }
+
+  
+  # read a line from a file
+  # @param 1: line number (if none provided use calling line)
+  # @param 2: file name (if none provided use current)
+  readline(){
+    declare -a l && readarray -t l <"${2:-"${BASH_SOURCE[0]}"}" && echo "${l[${1:-${BASH_LINENO[0]}}-1]}"
+  }
+
+  # windows style path ( like cygpath -w )
+  # Replace backslashes with forward slashes, if necessary (/c/ => C:/)
+  fs_win() {
+    local ref=""; if [ "$1" == -n ]; then ref="$1"; declare -n var="$2"; shift 2; else local var; fi
+    var="${*//\\/\/}"
+    [[ "$var" =~ ^/([a-zA-Z])/ ]] && var="${BASH_REMATCH[1]^}:/${var:3}"
+    [ "$ref" ] || echo "$var"
+  }
+
 }
