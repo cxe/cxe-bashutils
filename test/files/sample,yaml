@@ -1,0 +1,80 @@
+test_cases:
+  - name: "Empty input"
+    input: ""
+    expected_output: null
+
+  - name: "Whitespace only"
+    input: "    \t\n"
+    expected_output: null
+
+  - name: "Single character"
+    input: "A"
+    expected_output: "A"
+
+  - name: "Unicode characters"
+    input: "你好, мир, مرحبا"
+    expected_output: "你好, мир, مرحبا"
+
+  - name: "Large input"
+    input: "A" * 1000000
+    expected_output: "A" * 1000000
+
+  - name: "Special characters"
+    input: "!@#$%^&*()_+{}|:\"<>?`
+    expected_output: "!@#$%^&*()_+{}|:\"<>?`
+
+  - name: "Malformed JSON"
+    input:
+        key: value  # missing quotes around value
+    expected_output: "ParsingError"
+
+  - name: "Deeply nested structure"
+    input:
+        a:
+          b:
+            c:
+              d:
+                e:
+                  f:
+                    g:
+                      h:
+                        i:
+                          j: "value"
+    expected_output: "value"
+
+  - name: "Cyclic reference"
+    input:
+        self:
+          ref: *self
+    expected_output: "ParsingError"
+
+  - name: "Incorrect encoding"
+    input: !binary |-
+      YWJjZMSR
+    expected_output: "DecodingError"
+
+  - name: "Mixed data types"
+    input:
+        - 42
+        - "string"
+        - null
+        - true
+        - key:
+            nested:
+              deep: "value"
+    expected_output:
+        - 42
+        - 'string'
+        - None
+        - True
+        - key:
+            nested:
+              deep: 'value'
+
+  - name: "SQL Injection"
+    input: "DROP TABLE users; --"
+    expected_output: "Sanitized"
+
+  - name: "XSS Attack"
+    input: "<script>alert('hacked!');</script>"
+    expected_output: "Sanitized"
