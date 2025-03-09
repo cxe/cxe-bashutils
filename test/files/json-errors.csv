@@ -1,0 +1,51 @@
+Description;InvalidJSON
+Array with only a comma;[,]
+Empty array with trailing comma;[ , ]
+Array containing just a colon;[:]
+Object missing both curly braces;key: "value"
+Object with only an equal sign;{key=value}
+Array with misplaced semicolon;[1; 2; 3]
+Object key with spaces;{"first name": "John"}
+Array with object missing a key;[{"": "value"}]
+Number missing digits before decimal;{".value": 3}
+Number missing digits after decimal;{"value": 3.}
+Array with mixed delimiter types;[1, 2; 3]
+Array with stray bracket;[1, 2, 3]]
+Object with stray bracket;{"key": "value"}]
+Array with null separator;[1 null 2]
+Object with unexpected space in key;{"key " : "value"}
+Object missing a separator;{"key" "value"}
+Array missing closing square bracket;[1, 2, 3
+Object missing opening curly brace;"key": "value"}
+Array with single quote string;['text']
+Object with single quote key;{'key': "value"}
+Unescaped backslashes;{"path": "C:\Users\Test"}
+Object with misplaced equal sign;{"key"="value"}
+Array with misplaced period;[1. 2, 3]
+Number missing integer before exponent;{"value": e5}
+Object with number-only key without quotes;{1: "value"}
+Whitespace-only key;{"   ": "value"}
+Empty string in array;["", "text"]
+Array with mixed bracket types;[1, 2, 3)}
+Array containing only whitespace;[  ]
+Object with a missing value;{"key": }
+Array with an extra colon;[1, 2, :3]
+Nested objects with no keys;{{}}
+Array with leading comma;[,1, 2, 3]
+Array with misplaced at symbol;[@1, 2, 3]
+Object with multiple colons in key;{"key::" : "value"}
+Array with only open bracket;[
+Object with numeric key inside quotes;{"123": "valid", 123: "invalid"}
+Multiple unclosed objects;{ "key1": "value1", "key2": { "subkey": "value2"
+Array with extra double comma;[1, 2,, 3]
+Object missing closing double quote;{"key: "value"}
+Object containing a plus sign in a key;{"+key": "value"}
+Array with a lone trailing backslash;["text\"]
+Object with incorrect boolean case;{"isTrue": TRUE}
+Array with misplaced backtick;[`text`]
+Nested empty objects;{{}, {}}
+Array with misplaced exclamation mark;[1, 2, !3]
+Object key containing tab;{"\tkey": "value"}
+Array with missing opening bracket;1, 2, 3]
+Object with misplaced comma;{"key", "value"}
+Object with nested colons in key;{"key:sub": "value"}
