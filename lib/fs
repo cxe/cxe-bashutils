@@ -195,6 +195,11 @@
       [ -e "$d/$1" ] && echo "${d:-/}" || return 4
   }
 
+  dir_is_empty() {
+    local dir="${1:?missing directory}"
+    [[ ! -e "$dir" ]] || [[ -z "$(ls -A "$dir")" ]]
+  }
+
   # @usage FOO="$(fs_uward foo.txt)"
   # @alias readUpwardFile findUpwardFile
   fs_upward() {
@@ -225,17 +230,26 @@
     fi
   }
 
-
-  fs_data(){
-    local _d f="${1//\\/\/}"
-    [[ "$f" == \'*\' ]] && f="${f:1:-1}" && _d="${f,,}"
-    [[ "$f" = [[:alpha:]]:* ]] && f="/${_d:0:1}${f:2}"
-    [ -f "$f" ] || return 2
-    _d="$(<"$f")"
-    echo "$_d"
+  # @alias fs_set, write, PUT
+  fs_write(){
+    declare file="$1" && shift
+    # todo check no conflict
+    echo "$*" >> "$file"
   }
 
-  
+
+  # @alias fs_read fs_get
+  fs_data(){
+    declare -n fs_data
+    declare f="${1//\\/\/}" drive # convert windows path to posix path
+    [[ "$f" == \'*\' ]] && f="${f:1:-1}" # remove quotes
+    drive="${f,,}" && [[ "$f" = [[:alpha:]]:* ]] && f="/${drive:0:1}${f:2}"
+    [ -f "$f" ] || return 2
+    fs_data="$(<"$f")"
+    echo "$fs_data"
+  }
+
+
   # read a line from a file
   # @param 1: line number (if none provided use calling line)
   # @param 2: file name (if none provided use current)

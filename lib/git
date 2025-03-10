@@ -19,7 +19,7 @@ declare -F git &>/dev/null || {
                 echo "["$(git log --all --format='%aN <%aE>' | sort -u | sed 's/^/"/;s/$/"/' | paste -sd, -)"]"
                 ;;
 
-            pick-ifmissing) 
+            pick-ifmissing)
                 local commit="${2:-$("$GIT_BIN" log --all --format="%H" --topo-order -n 1)}"
                 if "$GIT_BIN" branch --contains "$commit" &>/dev/null; then
                     echo "Commit $commit is already in a branch."
@@ -28,7 +28,7 @@ declare -F git &>/dev/null || {
                 fi
                 ;;
 
-            pick-ifmissing-multiple) 
+            pick-ifmissing-multiple)
                 shift
                 if [[ $# -eq 0 ]]; then
                     echo "Error: No commits provided for pick-multiple-exclusive." >&2
@@ -102,8 +102,8 @@ declare -F git &>/dev/null || {
                     [[ $ref ]] && var="$lastmoddir" || echo "$lastmoddir"
                 fi
                 ;;
-            *) 
-                "$GIT_BIN" "$@" 
+            *)
+                "$GIT_BIN" "$@"
                 ;;
         esac
     }
