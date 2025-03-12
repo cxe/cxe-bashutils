@@ -149,6 +149,22 @@ declare -F return &>/dev/null || {
         [ -z "$DRY" ] && $cmd "${args[@]}"
     }
 
+    # Run a command with a timeout
+    run_with_timeout() {
+        local seconds="$1"
+        shift
+        timeout "$seconds" "$@"
+    }
+
+    # Repeat a command N times
+    repeat() {
+        local count="$1"
+        shift
+        for ((i = 0; i < count; i++)); do
+            "$@"
+        done
+    }
+
     # terminal interaction functions
     is_terminal() { [[ -t 1 && -n ${TERM} ]]; }
 

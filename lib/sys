@@ -37,6 +37,9 @@ declare -F sys &>/dev/null || {
       memory) # Get memory usage
         free -h 2>/dev/null || vm_stat | awk '/Pages free|Pages active/ {print $0}' ;;
 
+      memtop) # display top 10 processes by memory usage
+        ps aux --sort=-%mem | awk 'NR<=10{print $0}' ;;
+
       disk) # Get disk usage
         df -h / ;;
 
@@ -48,6 +51,19 @@ declare -F sys &>/dev/null || {
 
       network) # Get local network info
         ip -4 addr show scope global 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' || ifconfig 2>/dev/null | awk '/inet / {print $2}' ;;
+
+      # Check SSL certificate expiration date
+      ssl_expiry)
+        local domain="$1"
+        echo | openssl s_client -servername "$domain" -connect "$domain:443" 2>/dev/null | openssl x509 -noout -dates
+        ;;
+
+      ssh_connect) # with key
+        local user="$1"
+        local host="$2"
+        local key="${3:-$HOME/.ssh/id_rsa}"
+        ssh -i "$key" "$user@$host"
+        ;;
 
       *) echo "Usage: sys [type|command|arch|path_bin|ip|portscan|cpu|memory|disk|process|user|os|network]"; return 1 ;;
     esac

@@ -68,6 +68,13 @@ declare -F git &>/dev/null || {
                 "$GIT_BIN" rev-parse --short HEAD
                 ;;
 
+
+            force-push)
+                local branch="${1:-$(current_branch)}"
+                echo "Force pushing branch: $branch"
+                git push --force-with-lease origin "$branch"
+                ;;
+
             repository-url)
                 "$GIT_BIN" remote get-url origin 2>/dev/null || { echo "Error: No remote repository found." >&2; return 1; }
                 ;;

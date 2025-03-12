@@ -21,6 +21,9 @@ declare -F container &>/dev/null || {
           *) echo "Usage: container container [list|stop <id>|rm <id>]" ;;
         esac
         ;;
+      docker_ps) # list running Docker containers
+        docker ps --format "table {{.ID}}\t{{.Image}}\t{{.Status}}"
+        ;;
 
       help)
         cat <<-'EOF'

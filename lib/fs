@@ -266,4 +266,12 @@
     [ "$ref" ] || echo "$var"
   }
 
+
+  backup_file() {
+    local file backup
+    file="$(realpath "$1")"
+    backup="${file}-$(date +%Y%m%d%H%M%S).bak"
+    cp -v "$file" "$backup"
+    echo -e "\033[37;2mbacked up: $backup\033[0m" >&2
+  }
 }
