@@ -11,3 +11,5 @@ LONG_MAX="$( getconf LONG_MAX )"
 declare -r INT_MAX INT_MIN UINT_MAX UINT_MIN LLONG_MIN LLONG_MAX LONG_MIN LONG_MAX
 
 round(){ printf "%.$2f" "$(echo "scale=$2;(((10^$2)*$1)+0.5)/(10^$2)" | bc )"; }
+power() { echo "$1 ^ $2" | bc; }
+sqrt() { echo "scale=5; sqrt($1)" | bc; }
