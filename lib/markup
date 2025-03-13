@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+markup_tokenize() {
+    local x="$1"
+    local -a y=()
+    local -ir n=${#x}
+    local -i i=0 k=0
+
+    while (( i < n )); do
+        if [[ "${x:i:1}" == '<' ]]; then
+            while ((++i < n)) && [[ "${x:i:1}" != '>' ]]; do :; done
+            ((++i))
+            y+=("${x:k:i-k}")
+        else
+            while ((++i < n)) && [[ "${x:i:1}" != '<' ]]; do :; done
+            y+=("${x:k:i-k}")
+        fi
+        ((k = i))
+    done
+
+    # Print tokens
+    for v in "${!y[@]}"; do
+        echo "  [$v]: ${y["$v"]}"
+    done
+}
+
+# Test it
+markup_tokenize '<b>Hello</b>'
