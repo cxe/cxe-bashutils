@@ -34,7 +34,39 @@ declare -F str &>/dev/null || {
                 local parts; IFS="$2" read -ra parts <<< "$1"
                 printf "%s\n" "${parts[@]}" ;;
             slugify)
-                echo "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-|-$//g' ;;
+                local v="$1"
+                v=$(echo "$v" | tr '[:upper:]' '[:lower:]') # Convert to lowercase
+                v=$(echo "$v" | sed -E 's/æ/ae/g; s/œ/oe/g; s/ﬁ/fi/g; s/ﬂ/fl/g;')
+
+                # Replace diacritics (including German Umlauts)
+                v=$(echo "$v" | sed -E '
+                    s/[àáâãäåāăą]/a/g;
+                    s/[çćčĉċ]/c/g;
+                    s/[ďđ]/d/g;
+                    s/[èéêëēėęě]/e/g;
+                    s/[ƒ]/f/g;
+                    s/[ĝğġģ]/g/g;
+                    s/[ĥħ]/h/g;
+                    s/[ìíîïīĩĭįı]/i/g;
+                    s/[ĵ]/j/g;
+                    s/[ķĸ]/k/g;
+                    s/[ĺļľŀł]/l/g;
+                    s/[ñńņňŋ]/n/g;
+                    s/[òóôõöøōő]/o/g;
+                    s/[ŕŗř]/r/g;
+                    s/[śŝşš]/s/g;
+                    s/[ţťŧ]/t/g;
+                    s/[ùúûüũūŭůűų]/u/g;
+                    s/[ŵ]/w/g;
+                    s/[ýÿŷ]/y/g;
+                    s/[žźż]/z/g;
+                    s/[ß]/ss/g;
+                ')
+
+                v=$(echo "$v" | sed -E 's/[^a-z0-9]+/-/g')
+                v=$(echo "$v" | sed -E 's/-+/-/g; s/^-|-$//g')
+                echo "$v"
+                ;;
             random) # Generate a secure random string
                 LC_ALL=C tr -dc "${2:-'A-Za-z0-9!@#$%^&*()_+'}" </dev/urandom | head -c "$1" ;;
             to_base64)
