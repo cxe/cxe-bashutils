@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="style.xsl"?>
+<!DOCTYPE SystemData [
+    <!ELEMENT SystemData (Companies, Users, Transactions, Logs, Files)>
+    <!ENTITY test "This is an entity reference &test;">  <!-- Circular Entity Reference Pitfall -->
+]>
+<SystemData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="system_schema.xsd">
+    <!-- Company Data -->
+    <Companies>
+        <Company id="001" name="TechCorp" industry="Software">
+            <Departments>
+                <Department id="D001" name="Research">
+                    <Employees>
+                        <Employee id="E1001" role="Engineer">John Doe</Employee>
+                        <Employee id="E1002" role="Scientist">Jane Smith</Employee>
+                    </Employees>
+                </Department>
+                <Department id="D002" name="HR">
+                    <Employees>
+                        <Employee id="E2001" role="Manager">Alice Brown</Employee>
+                    </Employees>
+                </Department>
+            </Departments>
+        </Company>
+        <Company id="002" name="FinServe" industry="Finance">
+            <Departments>
+                <Department id="D101" name="Accounting">
+                    <Employees>
+                        <Employee id="E3001" role="Accountant">Bob White</Employee>
+                    </Employees>
+                </Department>
+            </Departments>
+        </Company>
+    </Companies>
+
+    <!-- Users Data with Duplicate IDs Pitfall -->
+    <Users>
+        <User id="U1001" type="Admin">
+            <Name>John Doe</Name>
+            <Email>john.doe@techcorp.com</Email>
+            <Permissions>
+                <Permission>READ</Permission>
+                <Permission>WRITE</Permission>
+                <Permission>DELETE</Permission>
+            </Permissions>
+        </User>
+        <User id="U1001" type="Standard">  <!-- Duplicate ID Pitfall -->
+            <Name>Jane Smith</Name>
+            <Email>jane.smith@techcorp.com</Email>
+            <Permissions>
+                <Permission>READ</Permission>
+                <Permission>WRITE</Permission>
+            </Permissions>
+        </User>
+    </Users>
+
+    <!-- Transactions Data with Malformed Numeric Value Pitfall -->
+    <Transactions>
+        <Transaction id="T1001" type="Purchase">
+            <Date>2025-03-19</Date>
+            <Amount currency="USD">1500.00</Amount>
+            <Details><![CDATA[Purchased 10 software licenses.]]></Details>
+        </Transaction>
+        <Transaction id="T1002" type="Refund">
+            <Date>2025-03-20</Date>
+            <Amount currency="USD">-500,00</Amount>  <!-- Invalid Numeric Format Pitfall -->
+            <Details><![CDATA[Refund for returned service package.]]></Details>
+        </Transaction>
+    </Transactions>
+
+    <!-- Logs Data with Invalid Timestamp Format Pitfall -->
+    <Logs>
+        <Log id="L001" level="INFO" timestamp="2025-03-19T12:34:56Z">
+            <Message>User login successful: U1001</Message>
+        </Log>
+        <Log id="L002" level="ERROR" timestamp="2025/03/19 13:45:22">  <!-- Invalid Date Format Pitfall -->
+            <Message><![CDATA[Failed to process transaction ID T1002 due to insufficient balance.]]></Message>
+        </Log>
+        <Log id="L003" level="WARN" timestamp="2025-03-19T25:61:61Z">  <!-- Nonexistent Time Pitfall -->
+            <Message><![CDATA[Invalid timestamp detected.]]></Message>
+        </Log>
+    </Logs>
+
+    <!-- Binary Data Encoded in Base64 (Pitfall: Large Inline Data) -->
+    <Files>
+        <File id="F1001" type="image/png">
+            <Filename>logo.png</Filename>
+            <Data encoding="base64">
+                iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABH0lEQVQ4T6XTv0oDQRSG4Q8loUKh1EIoFSoXr0KbRRoFBYsXELl0FSoVCgUQOE2nEKhUKBQS9eRRSKQ8iWgbfo/JmZ3pvdmFvGySR2Zzj3pmcmvN3oHeptYZ5LTYZis7xxBc+ADZyN7DR5iQT1oYxTPmIzL8Bhf6BWhP2HOGfJzhjzeFL5mAEH/6C1pmMB5ylsMdpDA65RBX9sJoGAATfg3xAqx8kmZZIYTnMsxk6Cw3wQNOjGwbcAx37Af2XGHLrVYZTHDYc/zFxCpWAlKzI7OSw0IZWZkYv4FPTAZS2HpqZkbM5f/w2cCSLKTFFtw6rrAYjmhiOUkRtUzhjNdSxHLRu9xOwXDPBhZx34HjMGHcgzFw9hrmvMdMRY7GmZa5ZOsJGH84+P/UJf6D4CufThyzHsRmgAAAABJRU5ErkJggg==
+            </Data>
+        </File>
+        <File id="F1002" type="text/xml">  <!-- XML within XML Pitfall -->
+            <Filename>nested.xml</Filename>
+            <Data encoding="base64">
+                PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz48Um9vdD48RWxlbWVudD5JbnZhbGlkPC9FbGVtZW50PjwvUm9vdD4=
+            </Data>
+        </File>
+    </Files>
+</SystemData>
