@@ -1,9 +1,115 @@
 #!/usr/bin/env bash
 
-declare -F json >/dev/null 2>/dev/null || {
-  json(){
-    declare -x JSON_URL=""
-    declare -x JSON_SRC=""
-    declare -xa JSON_ERR=()
-  }
+json_tokenize() {
+    declare -r x="$*"
+    declare -n y=token_list t=token_type
+    declare -i n=${#x} k=0 i=0
+    local include_whitespace=true  # Schalte auf false, um whitespace zu ignorieren
+
+    add() { t+=("$1") && y+=("$2"); }
+    trap 'unset add' RETURN
+
+    while (( k=i, ++i <= n )); do
+        x_k="${x:k:1}"
+        case "$x_k" in
+            '"') # string
+                while (( i < n )); do
+                    c="${x:i:1}"
+                    if [[ "$c" == '"' ]]; then
+                        # Count preceding backslashes
+                        bs=0
+                        j=$((i - 1))
+                        while (( j >= 0 )) && [[ "${x:j:1}" == "\\" ]]; do
+                            ((bs++))
+                            ((j--))
+                        done
+                        (( bs % 2 == 0 )) && break  # even: not escaped
+                    fi
+                    (( i++ ))
+                done
+                (( i < n )) && (( i++ ))  # include closing quote
+                add str "${x:k:i-k}"
+                ;;
+
+            [[:space:]])
+                while (( i < n )); do
+                    c="${x:i:1}"
+                    case "$c" in
+                        [[:space:]]) (( i++ )) ;;
+                        *) break ;;
+                    esac
+                done
+                $include_whitespace && add wsp "${x:k:i-k}"
+                ;;
+
+            -|[0-9])
+                if [[ "$x_k" == "-" ]]; then
+                    if (( i == n )); then
+                        add pmn '-'
+                        break
+                    fi
+                    c="${x:i:1}"
+                    case "$c" in
+                        [0-9]) ;;  # valid number follows
+                        *) add pmn '-' ; continue ;;
+                    esac
+                fi
+
+                while (( i < n )); do
+                    c="${x:i:1}"
+                    case "$c" in
+                        [0-9]|[.+-eE]) ;;  # valid numeric characters
+                        *) break ;;
+                    esac
+
+                    if [[ "$c" =~ [eE] ]]; then
+                        next="${x:i+1:1}"
+                        case "$next" in
+                            [0-9]|[+-]) ;;  # valid exponent continuation
+                            *) break ;;
+                        esac
+                    fi
+                    (( i++ ))
+                done
+
+                add num "${x:k:i-k}"
+                ;;
+
+            [a-zA-Z])
+                while (( i < n )); do
+                    c="${x:i:1}"
+                    case "$c" in
+                        [a-zA-Z0-9_]) (( i++ )) ;;
+                        *) break ;;
+                    esac
+                done
+                local word="${x:k:i-k}"
+                case "$word" in
+                    null)  add lnl "$word" ;;
+                    false) add lbf "$word" ;;
+                    true)  add lbt "$word" ;;
+                    *)
+                        echo "Unbekanntes Literal: $word" >&2
+                        return 6
+                        ;;
+                esac
+                ;;
+
+            '{') add soo '{' ;;
+            '}') add eoo '}' ;;
+            '[') add soa '[' ;;
+            ']') add eoa ']' ;;
+            ':') add pcl ':' ;;
+            ',') add sep ',' ;;
+            *)   add err "$x_k" ;;
+        esac
+    done
 }
+
+
+declare -a token_list=() token_type=()
+json_tokenize "$(<./test/files/object-maximum-complexity.json)"
+
+for ((i=0; i < ${#token_list[@]}; ++i)); do
+    echo "${token_type[i]}: ${token_list[i]}"
+done
