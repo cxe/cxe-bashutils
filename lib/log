@@ -1,15 +1,30 @@
 #!/usr/bin/env bash
 
-declare -F log >/dev/null 2>/dev/null || {
+declare -F log &>/dev/null || {
+  
+  declare -gxi log_level=0
+  declare log_level(){ log_level=${1:-0}; }
+
+  declare log_colors=false && [ -t 1 ] && [[ "$TERM" == *color* ]] && log_colors=true
+  
+  declare -gxA log_style=();
+  log_style(){ [ $log_colors ] && log_style["$1"]="\033[38;2;${4//,/;}m$2 " || log_style["$1"]="$2 "; }
+  log_style --code 0 ➲ 91,155,213 # detailed information for debugging
+  log_style --exec 0 ▸ 91,155,213 # detailed information for debugging
+  log_style --note 1 • 80,80,80
+  log_style --info 1 🛈 13,82,156 # informative events
+  log_style --good 2 ✔ 112,192,80 # confirmation
+  log_style --warn 2 ⚠ 255,192,0 # warning unexpected events that may lead to errors
+  log_style --fail 3 🗲 255,51,0 # error events that prevent some functionalities from working
+  log_style --dire 4 ✘ 192,0,0 # critical events that require intervention to prevent system failure
+  log_style --dead 5 ☠ 128,0,32 # fatal events that indicate a system component is inoperable
+
+  # write a (colored) message to stderr
+  # @usage: log <level> <message>
   log(){
-    local cmd="$*" txt="$*"
-    if [[ "${cmd}" == mkdir* ]]; then
-      txt="create directory '${@:(($#))}'"
-    fi
-    if "$@"; then
-      >&2 echo -e "$? \033[31m$txt\033[0m"
-    else
-      >&2 echo -e "$? \033[31mError: $txt at ${BASH_SOURCE[1]}:${BASH_LINENO[0]}\033[0m"
-    fi 
+    [ "$1" != --exec ] && (( log_level >= $2 )) || return 0
+    local style="" && [ "${log_style["$1"]}" ] && style="${log_style["$1"]}"
+    echo -e "${style}$*${style+\033[0m}" >&2
+    [ "$1" == --exec ] && $@
   }
 }
