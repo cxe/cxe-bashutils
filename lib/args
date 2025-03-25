@@ -1,0 +1,49 @@
+
+# parse arguments into `args`, options and flags into `opts`
+# @usage: declare -A opts=() && declare -a args && args "$@" && set -- "${args[@]}"
+#         opts can define option-default-values
+#         maps can be used to map short to long option names or aliases
+args() {
+    declare -n a=args o=opts m=maps
+    local k f val
+    a=()
+
+    while (($#)); do
+        case $1 in
+        --*=*) # --key=value
+            k="${1%%=*}"
+            o["${k:2}"]="${1#*=}"
+            ;;
+        --) # end of options
+            a+=("${@:2}")
+            break
+            ;;
+        --*) # --key [value] (only if defined in opts)
+            k="${1:2}"
+            if [[ -v o["$k"] ]]; then
+                val="${2:-}"
+                if [[ -n $val && $val != -* ]]; then
+                    o["$k"]="$val"
+                    shift 2 && continue
+                fi
+            fi
+            o["$k"]=⊤
+            ;;
+        -[a-zA-Z]*) # -aBc or -k=value (with alias mapping and exclusion of negative numbers)
+            f="${1:1}"
+            while [[ -n $f ]]; do
+                k="${f:0:1}"
+                f="${f:1}"
+                [[ -n ${m["$k"]+_} ]] && k="${m["$k"]}"
+                if [[ $f == =* ]]; then
+                    o["$k"]="${f:1}"
+                    break
+                fi
+                o["$k"]=⊤
+            done
+            ;;
+        *) a+=("$1") ;; # positional
+        esac
+        shift
+    done
+}
