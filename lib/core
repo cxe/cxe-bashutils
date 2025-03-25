@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # core utility functions
-declare -F return &>/dev/null || {
+declare -F trap &>/dev/null || {
 
     # wraps builtin exit allowing exiting with errorstatus AND a stderr comment
     # @alias fail
@@ -30,46 +30,6 @@ declare -F return &>/dev/null || {
         else
             builtin trap "$existing_trap; $new_trap" "$signal"
         fi
-    }
-
-    # parse arguments and options
-    # @usage:   local -A opts=() && local -a args=() && parse "$@" && set -- "${args[@]}"
-    parse() {
-        declare -n _o=opts _a=args && local k f
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-            --*=*)
-                k="${1%%=*}"
-                _o["${k:2}"]="${1#*=}"
-                ;;
-            --*)
-                _o["$1"]=$1
-                [[ "$2" && "$2" != -* ]] && shift
-                ;;
-            -?*)
-                if [[ "$1" =~ ^-[0-9]+([.][0-9]+)?$ ]]; then
-                    _a+=("$1") # allow negative numbers
-                else
-                    f="${1:1}"
-                    while [[ -n "$f" ]]; do
-                        k="${f:0:1}"
-                        f="${f:1}"
-                        if [[ "$f" == =* ]]; then
-                            _o["$k"]="${f:1}"
-                            break
-                        fi
-                        _o["$k"]=true
-                    done
-                fi
-                ;;
-            --)
-                shift && _a+=("$@") && break
-                ;;
-            -) _a+=("$1") ;;
-            *) _a+=("$1") ;;
-            esac
-            shift
-        done
     }
 
     # @usage: stream_into echo
