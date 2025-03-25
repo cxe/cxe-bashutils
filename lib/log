@@ -6,7 +6,7 @@ declare -F log &>/dev/null || {
   declare -gxi LOG_LEVEL=0
   declare -gxA log_level=() log_style=();
   log_style(){
-    log_level[$1]=$2
+    log_level["$1"]=$2
     [ $LOG_COLOR ] && log_style["$1"]="\033[38;2;${4//,/;}m$3 " || log_style["$1"]="$3 ";
   }
   log_style --code 0 ➲ 91,155,213 # detailed information for debugging
@@ -23,14 +23,17 @@ declare -F log &>/dev/null || {
   # @usage: log <level> <message>
   #         Example - logging specific command: `log --exec ls -la`
   log(){
-    local output exec=false && [ "$1" == --exec ] && exec=true
-    [ $exec ] || { (( LOG_LEVEL >= "${log_level[$1]}" )) || return 0; }
-    local style="" && [ "${log_style["$1"]}" ] && { style="${log_style["$1"]}"; shift;}
-    if [ $exec ]; then
-      output=$( "$@" 2>&1 )
-      [ $? == 0 ] && echo -e "${log_style[--good]}\033[1m$@\033[22m\n$output${style+\033[0m}" >&2 || echo -e "${log_style[--fail]}\033[1m$@\033[22m\n$output${style+\033[0m}" >&2
+    local style title detail type && [ "${log_level[$1]}" ] && type="$1" && style="${log_style["$1"]}" && shift
+    [ "$type" != --exec ] && (( LOG_LEVEL >= "${log_level[$type]}" )) && return 0
+    title="$*"
+    if [ "$type" == --exec ]; then
+      detail=$( "$@" 2>&1 )
+      [ $? == 0 ] && style="${log_style[--good]}" || style="${log_style[--fail]}"
+    elif [[ $# == 1 ]]; then
+      echo -e "${style}${title}${style+\033[0m}" >&2
     else
-      echo -e "${style}$*${style+\033[0m}" >&2
+      echo -e "${style}\033[1m$1\033[22m\n\t${@:2}${style+\033[0m}" >&2
     fi
+    [[ "${log_level[$type]}" -gt 2 ]] && exit
   }
 }
