@@ -2,48 +2,66 @@
 # parse arguments into `args`, options and flags into `opts`
 # @usage: declare -A opts=() && declare -a args && args "$@" && set -- "${args[@]}"
 #         opts can define option-default-values
-#         maps can be used to map short to long option names or aliases
+#         short to long option mapping supported by -* keys in opts
 args() {
-    declare -n a=args o=opts m=maps
-    local k f val
-    a=()
-
-    while (($#)); do
-        case $1 in
-        --*=*) # --key=value
-            k="${1%%=*}"
-            o["${k:2}"]="${1#*=}"
-            ;;
-        --) # end of options
-            a+=("${@:2}")
-            break
-            ;;
-        --*) # --key [value] (only if defined in opts)
-            k="${1:2}"
-            if [[ -v o["$k"] ]]; then
-                val="${2:-}"
-                if [[ -n $val && $val != -* ]]; then
-                    o["$k"]="$val"
-                    shift 2 && continue
-                fi
+    local k f v op
+    declare -n a=args o=opts && a=()
+    declare -A map=() array=()
+    for k in "${!opts[@]}"; do
+        if [[ $k == -* ]]; then 
+            if [[ "${opts[$k]}" == \[\] ]]; then
+                array["$k"]=0
+            else
+                map["$k"]="${opts["$k"]}"
             fi
-            o["$k"]=⊤
-            ;;
-        -[a-zA-Z]*) # -aBc or -k=value (with alias mapping and exclusion of negative numbers)
-            f="${1:1}"
-            while [[ -n $f ]]; do
-                k="${f:0:1}"
-                f="${f:1}"
-                [[ -n ${m["$k"]+_} ]] && k="${m["$k"]}"
-                if [[ $f == =* ]]; then
-                    o["$k"]="${f:1}"
-                    break
+            unset 'opts["$k"]'
+        fi
+    done
+
+    while (( $# )); do
+        op=()
+
+        # process next argument
+        case $1 in
+            --*=*) k="${1%%=*}" && op+=("${k:2}" "${1#*=}") ;; # --key=value
+            --) a+=("${@:2}"); break ;; # end of options
+            --*) [[ -n ${map["$1"]+_} && ${2:-} != -* ]] && op+=("${1:2}" "${2:-}") || op+=("${1:2}" "${1:2}"); shift;; # --key [value] (only if predefined in opts)
+            -[a-zA-Z]*) # named-option or case sensitive flags
+                if [[ -n ${map["$1"]+_} ]]; then
+                    k="${map["$1"]}"
+                    v="${2:-}"
+                    if [[ -n $v && $v != -* ]]; then
+                        op+=("$k" "$v")
+                        shift
+                    fi
+                else
+                    f="${1:1}"
+                    while [[ -n $f ]]; do
+                        k="${f:0:1}"
+                        f="${f:1}"
+                        [[ -n ${map["-$k"]+_} ]] && k="${map["-$k"]}"
+                        if [[ $f == =* ]]; then
+                            op+=("$k" "${f:1}")
+                            break
+                        fi
+                        op+=("$k" "$k")
+                    done
                 fi
-                o["$k"]=⊤
-            done
-            ;;
-        *) a+=("$1") ;; # positional
+                ;;
+            *) a+=("$1") ;; # positional
         esac
         shift
+
+        # apply collected options
+        if (( ${#op[@]} > 0 )); then
+            for ((i=0,n=${#op[@]}; i<n; i+=2)); do
+                k="${op[i]}" && v="${op[i+1]}"
+                if [[ -n ${array["--$k"]+_} ]]; then
+                    o["${k//-/_}_${array["--$k"]}"]="$v"
+                    (( array["--$k"]++ ))
+                fi
+                o["$k"]="$v"
+            done
+        fi
     done
 }
