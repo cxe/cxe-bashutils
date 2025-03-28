@@ -20,7 +20,7 @@ cut -d ',' -f1-3 data.csv
 diff -u file1.txt file2.txt
 
 # Network Commands
-ping -c 4 google.com
+ping -4 -c 4 google.com
 curl -X GET https://api.example.com/data
 wget --output-document=downloaded_file.html https://example.com
 netstat -tulnp | grep LISTEN

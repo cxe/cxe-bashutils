@@ -5,27 +5,29 @@ source "${BASH_SOURCE[0]%/*}/../lib/log"
 source "${BASH_SOURCE[0]%/*}/../lib/args"
 
 declare -A opts_example=(
-    ["find / -name \"myfile.txt\""]='[-name]=name'
-    ["grep -e \"error\" -e \"warning\" /var/log/syslog"]='[-e]=[]'
+    ["find / -name \"myfile.txt\""]='[-name]=-name+'
+    ["grep -e \"error\" -e \"warning\" /var/log/syslog"]='[-e]=@+'
+    ["cut -d ',' -f1-3 data.csv"]='[-d]=+ [-f]=?'
+    ["ping -4 -c 4 google.com"]='[-c]=+'
 )
 
 declare -A args_example=(
     ["exit 503"]='-a args=([0]="503") -A opts=()'
-    ["ls -la"]='-a args=() -A opts=([l]="l" [a]="a" )'
+    ["ls -la"]='-a args=() -A opts=([l]="1" [a]="1" )'
     ["cd /home/user/documents"]='-a args=([0]="/home/user/documents") -A opts=()'
     ["whoami"]='-a args=() -A opts=()'
-    ["id -u -n"]='-a args=() -A opts=([u]="u" [n]="n" )'
+    ["id -u -n"]='-a args=() -A opts=([u]="1" [n]="1" )'
     ["mv \"My File (2024).txt\" \"New File [backup].txt\""]='-a args=([0]="My File (2024).txt" [1]="New File [backup].txt") -A opts=()'
     ["touch \"\${FILE:-default.txt}\""]='-a args=([0]="default.txt") -A opts=()'
     ["find / -name \"myfile.txt\""]='-a args=([0]="/") -A opts=([name]="myfile.txt" )'
-    ["rm -rf /path/to/directory"]='-a args=([0]="/path/to/directory") -A opts=([r]="r" [f]="f" )'
-    ["cp -r source/ destination/"]='-a args=([0]="source/" [1]="destination/") -A opts=([r]="r" )'
-    ["grep -e \"error\" -e \"warning\" /var/log/syslog"]=''
-    ["awk '{print \$1\"\t\"\$2}' file.txt"]=''
-    ["sed -i 's/old/new/g' file.txt"]=''
-    ["cut -d ',' -f1-3 data.csv"]=''
-    ["diff -u file1.txt file2.txt"]=''
-    ["ping -c 4 google.com"]=''
+    ["rm -rf /path/to/directory"]='-a args=([0]="/path/to/directory") -A opts=([r]="1" [f]="1" )'
+    ["cp -r source/ destination/"]='-a args=([0]="source/" [1]="destination/") -A opts=([r]="1" )'
+    ["grep -e \"error\" -e \"warning\" /var/log/syslog"]='-a args=([0]="/var/log/syslog") -A opts=([e_list]="'\'error\'' '\'warning\''" [e]="warning" )'
+    ["awk '{print \$1\"\t\"\$2}' file.txt"]='-a args=([0]="{print \$1\"\\''t\"\$2}" [1]="file.txt") -A opts=()'
+    ["sed -i 's/old/new/g' file.txt"]='-a args=([0]="s/old/new/g" [1]="file.txt") -A opts=([i]="1" )'
+    ["cut -d ',' -f1-3 data.csv"]='-a args=([0]="data.csv") -A opts=([f]="1-3" [d]="," )'
+    ["diff -u file1.txt file2.txt"]='-a args=([0]="file1.txt" [1]="file2.txt") -A opts=([u]="1" )'
+    ["ping -4 -c 4 google.com"]='-a args=([0]="google.com") -A opts=([4]="1" [c]="4" )'
     ["curl -X GET https://api.example.com/data"]=''
     ["wget --output-document=downloaded_file.html https://example.com"]=''
     ["netstat -tulnp | grep LISTEN"]=''
@@ -111,9 +113,11 @@ describe args
             else
                 args
             fi
-            declare output="$( declare -p args opts | paste -sd' ' )" && output="${output//declare /}"
-            if [ "$output" != "${args_example[$example]}" ]; then
-                log --fail "$example" "$output"
+            declare output="$( declare -p args opts | paste -sd' ' )"
+            output="${output//declare /}"
+            expectation="${args_example[$example]}"
+            if [ "$output" != "$expectation" ]; then
+                log --fail "$example" "$output \033[33m\nexpect: $expectation"
             else
                 log --good "$example"
             fi
@@ -121,7 +125,7 @@ describe args
             example="${example//\\/\\\\}"
             example="${example//\"/\\\"}"
             example="\"${example//\$/\\\$}\""
-            echo "[$example]=''"
+            echo "MISSING [$example]=''"
         fi
         
     done < "${BASH_SOURCE[0]%/*}/files/example.sh"
