@@ -23,7 +23,7 @@ diff -u file1.txt file2.txt
 ping -4 -c 4 google.com
 curl -X GET https://api.example.com/data
 wget --output-document=downloaded_file.html https://example.com
-netstat -tulnp | grep LISTEN
+netstat -tulnp
 ssh -i private_key.pem user@server
 scp -P 2222 user@host:/remote/path /local/path
 

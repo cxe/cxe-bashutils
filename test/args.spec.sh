@@ -9,6 +9,7 @@ declare -A opts_example=(
     ["grep -e \"error\" -e \"warning\" /var/log/syslog"]='[-e]=@+'
     ["cut -d ',' -f1-3 data.csv"]='[-d]=+ [-f]=?'
     ["ping -4 -c 4 google.com"]='[-c]=+'
+    ["scp -P 2222 user@host:/remote/path /local/path"]='[-P]=+'
 )
 
 declare -A args_example=(
@@ -28,11 +29,11 @@ declare -A args_example=(
     ["cut -d ',' -f1-3 data.csv"]='-a args=([0]="data.csv") -A opts=([f]="1-3" [d]="," )'
     ["diff -u file1.txt file2.txt"]='-a args=([0]="file1.txt" [1]="file2.txt") -A opts=([u]="1" )'
     ["ping -4 -c 4 google.com"]='-a args=([0]="google.com") -A opts=([4]="1" [c]="4" )'
-    ["curl -X GET https://api.example.com/data"]=''
-    ["wget --output-document=downloaded_file.html https://example.com"]=''
-    ["netstat -tulnp | grep LISTEN"]=''
-    ["ssh -i private_key.pem user@server"]=''
-    ["scp -P 2222 user@host:/remote/path /local/path"]=''
+    ["curl -X GET https://api.example.com/data"]='-a args=([0]="GET" [1]="https://api.example.com/data") -A opts=([X]="1" )'
+    ["wget --output-document=downloaded_file.html https://example.com"]='-a args=([0]="https://example.com") -A opts=([output_document]="downloaded_file.html" )'
+    ["netstat -tulnp"]='-a args=() -A opts=([u]="1" [t]="1" [p]="1" [n]="1" [l]="1" )'
+    ["ssh -i private_key.pem user@server"]='-a args=([0]="private_key.pem" [1]="user@server") -A opts=([i]="1" )'
+    ["scp -P 2222 user@host:/remote/path /local/path"]='-a args=([0]="user@host:/remote/path" [1]="/local/path") -A opts=([P]="2222" )'
     ["tar -czvf archive.tar.gz /path/to/folder"]=''
     ["tar --exclude=*.log -czvf backup.tar.gz /var/log"]=''
     ["zip -r archive.zip folder/"]=''
