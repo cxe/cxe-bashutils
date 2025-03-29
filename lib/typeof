@@ -18,20 +18,24 @@ declare -F typeof &>/dev/null || {
            elif [[ "$data" == @(true|false) ]]; then type=boolean; fi
       esac
     fi
-    [ $# -lt 2 ] && echo $type || case "$2" in
-      !=|!==)
-        local not=1 ;&
-      ===|==|is)
-        local ok;
-        case "$3" in
-          readonly) [[ "${attr[1]}" == *r* ]] && ok=1;;
-          executable|callable) [[ "$type" == @(builtin|file|function) ]] && ok=1;;
-          empty) [ ${#data[@]} == 0 ] && ok=1;;
-          varname) [[ "$name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] && ok=1;;
-          *) [ "$type" == "$3" ] && ok=1;;
-        esac
-        if [ "$not" ]; then test ! "$ok"; else test "$ok"; fi ;;
-      =~|matches) [[ "$data" =~ $3 ]];;
-    esac
+    if [ $# -lt 2 ]; then
+      echo $type
+    else
+      case "$2" in
+        !=|!==)
+          local not=1 ;&
+        ===|==|is)
+          local ok;
+          case "$3" in
+            readonly) [[ "${attr[1]}" == *r* ]] && ok=1;;
+            executable|callable) [[ "$type" == @(builtin|file|function) ]] && ok=1;;
+            empty) [ ${#data[@]} == 0 ] && ok=1;;
+            varname) [[ "$name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] && ok=1;;
+            *) [ "$type" == "$3" ] && ok=1;;
+          esac
+          if [ "$not" ]; then test ! "$ok"; else test "$ok"; fi ;;
+        =~|matches) [[ "$data" =~ $3 ]];;
+      esac
+    fi
   }
 }
