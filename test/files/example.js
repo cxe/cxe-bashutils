@@ -1,4 +1,7 @@
 // This script is a demo that uses all JavaScript keywords and operators in context
+/**
+ * @see https://github.com/tc39/test262/tree/main/test
+ */
 
 function demoOperatorsAndKeywords() {
     let a = 10;
