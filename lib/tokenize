@@ -1,0 +1,149 @@
+
+declare -F tokenize &>/dev/null || {
+    tokenize() {
+        declare x="$1"
+        declare -n _list=token_list _type=token_type _spot=token_spot _reserved=token_reserved
+        token_list=() token_type=() token_spot=()
+
+        local i=0 k=0 n=${#x} line=1
+        local c ck ci token type quote quoted op2 op3
+
+        while (( i < n )); do
+            k=$i
+            ck="${x:i:1}"
+            ci="${x:i+1:1}"
+            type=""
+
+            [[ $ck == $'\n' || ( $ck == $'\r' && $ci != $'\n' ) ]] && ((line++))
+
+            case "$ck" in
+                $'\n'|$'\r'|$'\t'|" ")
+                    while (( i < n )); do
+                        c="${x:i:1}"
+                        [[ $c == $'\n' || $c == $'\r' ]] && ((line++))
+                        [[ $c != $'\n' && $c != $'\r' && $c != $'\t' && $c != " " ]] && break
+                        ((i++))
+                    done
+                    type="whitespace"
+                    ;;
+                "/")
+                    if [[ $ci == "/" ]]; then
+                        ((i+=2))
+                        while (( i < n )) && [[ ${x:i:1} != $'\n' && ${x:i:1} != $'\r' ]]; do ((i++)); done
+                        type="comment"
+                        continue
+                    elif [[ $ci == "*" ]]; then
+                        ((i+=2))
+                        while (( i < n-1 )); do
+                            c="${x:i:1}"
+                            ci="${x:i+1:1}"
+                            [[ $c == $'\n' || $c == $'\r' ]] && ((line++))
+                            [[ $c == "*" && $ci == "/" ]] && ((i+=2)) && break
+                            ((i++))
+                        done
+                        type="comment"
+                        continue
+                    fi
+                    ;;
+                "#")
+                    ((i++))
+                    while (( i < n )) && [[ ${x:i:1} != $'\n' && ${x:i:1} != $'\r' ]]; do ((i++)); done
+                    type="comment"
+                    ;;
+                "<")
+                    if [[ "${x:i:9}" == "<![CDATA[" ]]; then
+                        ((i+=9))
+                        while (( i < n-2 )) && [[ "${x:i:3}" != "]]>" ]]; do
+                            [[ ${x:i:1} == $'\n' || ${x:i:1} == $'\r' ]] && ((line++))
+                            ((i++))
+                        done
+                        ((i+=3))
+                        type="tag_cdata"
+                    elif [[ "${x:i:9}" == "<!DOCTYPE" ]]; then
+                        ((i+=9))
+                        while (( i < n )) && [[ ${x:i:1} != ">" ]]; do
+                            [[ ${x:i:1} == $'\n' || ${x:i:1} == $'\r' ]] && ((line++))
+                            ((i++))
+                        done
+                        ((i++))
+                        type="tag_doctype"
+                    elif [[ "${x:i:2}" == "<?" ]]; then
+                        ((i+=2))
+                        while (( i < n-1 )) && [[ "${x:i:2}" != "?>" ]]; do
+                            [[ ${x:i:1} == $'\n' || ${x:i:1} == $'\r' ]] && ((line++))
+                            ((i++))
+                        done
+                        ((i+=2))
+                        type="tag_procinst"
+                    elif [[ ${x:i+1:1} =~ [a-zA-Z/] ]]; then
+                        ((i++))
+                        quoted=""
+                        while (( i < n )); do
+                            c="${x:i:1}"
+                            if [[ $c == "\"" || $c == "'" ]]; then
+                                [[ $quoted == "$c" ]] && quoted="" || [[ -z $quoted ]] && quoted="$c"
+                            elif [[ $c == ">" && -z $quoted ]]; then
+                                ((i++))
+                                break
+                            fi
+                            [[ $c == $'\n' || $c == $'\r' ]] && ((line++))
+                            ((i++))
+                        done
+                        type="tag"
+                    fi
+                    ;;
+                '"'|"'")
+                    quote="$ck"
+                    ((i++))
+                    while (( i < n )); do
+                        c="${x:i:1}"
+                        ((i++))
+                        [[ $c == "\\" ]] && ((i++))
+                        [[ $c == "$quote" ]] && break
+                        [[ $c == $'\n' || $c == $'\r' ]] && ((line++))
+                    done
+                    type="string"
+                    ;;
+                *)
+                    op3="${x:i:3}"
+                    op2="${x:i:2}"
+                    if [[ "$op3" =~ ^(===|!==|>>>|<<=|>>=|>>>)$ ]]; then
+                        ((i+=3))
+                        type="operator"
+                    elif [[ "$op2" =~ ^(==|!=|<=|>=|&&|\|\||\+=|-=|\*=|/=|%=|<<|>>|&=|\|=|\+\+|--|\?\?|\.?|=>)$ ]]; then
+                        ((i+=2))
+                        type="operator"
+                    else
+                        c="$ck"
+                        if [[ $c =~ [a-zA-Z_] ]]; then
+                            while [[ ${x:i:1} =~ [a-zA-Z0-9_\$\-] ]]; do ((i++)); done
+                            type="word"
+                        elif [[ $c == "-" && $ci =~ [0-9] || $c =~ [0-9] ]]; then
+                            while [[ ${x:i:1} =~ [0-9.] ]]; do ((i++)); done
+                            [[ ${x:i:1} =~ [eE] ]] && ((i++))
+                            [[ ${x:i:1} =~ [-+] ]] && ((i++))
+                            while [[ ${x:i:1} =~ [0-9] ]]; do ((i++)); done
+                            type="number"
+                        elif [[ $c =~ [-+*/%=\&\|\<\>!^~:] ]]; then
+                            ((i++))
+                            type="operator"
+                        elif [[ $c =~ [\[\]{}()\;\:.,?!] ]]; then
+                            ((i++))
+                            type="punct"
+                        else
+                            ((i++))
+                            type="other"
+                        fi
+                    fi
+                    ;;
+            esac
+
+            token="${x:k:i-k}"
+            [[ $type == "word" && ${_reserved[$token]+_} ]] && type="reserved"
+            _list+=("$token")
+            _type+=("$type")
+            _spot+=("$line" "$k" "$i")
+        done
+    }
+
+}
