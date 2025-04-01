@@ -1,21 +1,33 @@
 #!/usr/bin/env bash
 
-declare -gx WORKDIR_LOCAL && WORKDIR_LOCAL="$( realpath -- "${BASH_SOURCE[0]%/*}" )" && declare -r WORKDIR_LOCAL
-declare -gxr WORKDIR_BUILD="$WORKDIR_LOCAL/tmp/latest" \
+declare -gxr WORKDIR_LOCAL="$( realpath -- "${BASH_SOURCE[0]%/*}" )" \
+             WORKDIR_BUILD="$WORKDIR_LOCAL/tmp/latest" \
              WORKDIR_TEST="$WORKDIR_LOCAL/test" \
+             WORKDIR_SRC="$WORKDIR_LOCAL/src" #
              WORKDIR_LIB="$WORKDIR_LOCAL/lib"
 
-source "$WORKDIR_LIB/core"
-source "$WORKDIR_LIB/sys"
-source "$WORKDIR_LIB/log"
-source "$WORKDIR_LIB/fs"
+build(){
 
-# check module names
-declare -A file && while file_list -n file "$WORKDIR_LIB"; do
-  sys_command "${file[name]}" && fail $? "module name conflict '${file[name]}'"
-done
+#  declare -A file && while file_list -n file "$WORKDIR_LIB"; do
+#  sys_command "${file[name]}" && fail $? "module name conflict '${file[name]}'"
+#done
+  local file name
 
-#if is_dir "$WORKDIR_BUILD"; then
-#  mv "$WORKDIR_BUILD" "$WORKDIR_BUILD~$( date +"%Y-%m-%d_%H-%M-%S%z" )"
-#fi
-#log mkdir -p "$WORKDIR_BUILD"
+  for file in "$WORKDIR_SRC"/*; do
+    if [[ -f "$file" && "$file" == *.js ]]; then
+      name="${file##*/}"; [[ "$name" == *" copy"* ]] || [[ "$name" == *.tmp ]] && continue
+      node "$file"
+    fi
+  done
+
+  for file in "$WORKDIR_LIB"/*; do
+    if [[ -f "$file" ]]; then
+      name="${file##*/}"; [[ "$name" == *" copy"* ]] || [[ "$name" == *.tmp ]] && continue
+      if type "$word" >/dev/null 2>&1; then
+        echo "lib/$name" conflicts with a system command && exit 1
+      fi
+    fi
+  done
+}
+
+build
