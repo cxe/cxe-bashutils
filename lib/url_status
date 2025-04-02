@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+declare -F url_status &>/dev/null || {
+    url_status() {
+        [ "$1" ] || return 1
+        local url="$1" method='-LX HEAD' status='' tries=0 max_tries=3
+        while (( tries++ < max_tries )); do
+            status=$(curl -so /dev/null -w "%{http_code}" $method "$url")
+            case "$status" in
+                2*) echo "$status"; return 0 ;;
+                301|302|307|308) method='-X GET' ;;
+                4*|5*) [ "$method" != '-X GET' ] && { echo "$status"; return 1; }; method='-X GET' ;;
+                *) return 3 ;;
+            esac
+        done
+        echo "'$url' timeout or too many redirects" >&2
+        return 2
+    }
+}
+
+# execute only if not sourced
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && [ "$*" ] && url_status "$@"

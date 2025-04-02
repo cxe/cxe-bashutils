@@ -26,10 +26,6 @@ declare -F data &>/dev/null || {
         set -- "${args[@]}" && result_data=""
 
         case "$1" in
-            status)
-                local host="$2"
-                result_data="$( curl -s -o /dev/null -w "%{http_code}" --max-time $timeout --keepalive-time $timeout "$host" )"
-                ;;
             reachable)
                 local host="$2"
                 [ curl -sk --max-time 5 -o /dev/null -w "%{http_code}" "$host" | grep -q "^[2-5][0-9][0-9]$" ] && return || return 1
