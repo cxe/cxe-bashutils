@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+# dir_hash
+#
+# Recursively computes a stable SHA256 hash of all files in a directory.
+# File content is hashed in sorted order to produce a consistent result.
+#
+# USAGE:
+#   dir_hash <directory> [--ignore <pattern>]...
+#
+# OPTIONS:
+#   --ignore <pattern>    Ignore files or folders matching the string or regex.
+#                         Supports both path prefixes and regular expressions.
+#
+# EXAMPLES:
+#   dir_hash ./mydir
+#   dir_hash ./project --ignore .git --ignore node_modules
+#   dir_hash ./logs --ignore '\.log$' --ignore '^./temp/'
+#
+# NOTE:
+# - Paths in matching start with './' (e.g. './node_modules/file.js')
+# - --ignore applies both as prefix matcher and regex.
+
+declare -F dir_hash &>/dev/null || {
+    dir_hash(){
+        local dir
+        local ignore_patterns=()
+
+        # Parse arguments
+        while [[ "$1" ]]; do
+            case "$1" in
+                --ignore)
+                    shift
+                    [[ "$1" ]] && ignore_patterns+=("$1")
+                    ;;
+                *)
+                    [[ -z "$dir" ]] && dir="$1"
+                    ;;
+            esac
+            shift
+        done
+
+        # Validate target directory
+        cd "$dir" 2>/dev/null || { echo "Cannot access directory: $dir" >&2; return 1; }
+
+        # Collect and filter files
+        find . -type f -print0 \
+        | {
+            while IFS= read -r -d '' file; do
+                skip=false
+                for pattern in "${ignore_patterns[@]}"; do
+                    [[ "$file" == ./"$pattern"* || "$file" =~ $pattern ]] && skip=true && break
+                done
+                $skip || printf '%s\0' "$file"
+            done
+        } \
+        | sort -z \
+        | xargs -0 sha256sum \
+        | sha256sum \
+        | cut -d' ' -f1
+    }
+}
+
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && [ "$*" ] && dir_hash "$@"
