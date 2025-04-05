@@ -1,0 +1,160 @@
+/* UNIVERSAL & COMPOUND SELECTORS */
+html body > main:is(.main, #main)[role~="main"] *:not(:empty):has(> img):where(.highlighted, .dark) {
+  all: initial;
+  box-sizing: border-box;
+  contain: layout paint;
+  isolation: isolate;
+  pointer-events: none;
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
+  user-select: text;
+  caret-color: rebeccapurple;
+  accent-color: deeppink;
+}
+
+/* CUSTOM COUNTERS AND ATTRIBUTES */
+.counter::before {
+  counter-reset: section 5;
+  content: counter(section) " • " attr(data-title);
+}
+
+/* GRID & FLEX */
+.layout {
+  display: grid;
+  grid-template: [row1-start] "header header" 60px [row1-end]
+                 [row2-start] "nav main" 1fr [row2-end] / 200px 1fr;
+  place-items: center;
+  gap: min(2vw, 1rem);
+}
+
+.flex {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  align-items: stretch;
+  align-content: space-evenly;
+  row-gap: 1em;
+}
+
+/* FILTERS & MASKS */
+.visual {
+  filter: blur(2px) brightness(90%) hue-rotate(180deg) drop-shadow(2px 4px 6px black);
+  backdrop-filter: invert(60%) sepia(30%);
+  mask-image: radial-gradient(circle, black 50%, transparent 100%);
+  mix-blend-mode: multiply;
+}
+
+/* TYPOGRAPHY + WRITING MODES */
+.text {
+  font-variant: small-caps;
+  font-feature-settings: "kern" 1, "liga" 0;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  direction: rtl;
+  line-clamp: 3;
+  hyphens: auto;
+}
+
+/* SCROLL & OVERSCROLL */
+.scroll-test {
+  scroll-snap-type: y mandatory;
+  scroll-margin-top: 10px;
+  scroll-padding-inline-start: 1rem;
+  overscroll-behavior: auto;
+}
+
+/* ADVANCED SELECTORS & WEIRD COMBOS */
+ul > li:nth-child(odd):has(a[target="_blank"]):not(.ignore):first-of-type:hover::after {
+  content: "↗";
+  position: absolute;
+  right: 0;
+}
+
+a[href^="https"]:not([rel~="noopener"]):visited:hover::before {
+  content: "⚠️";
+  color: orange;
+}
+
+/* NESTING + MULTIPLE PSEUDOS */
+.card {
+  &.hoverable:is(:hover, :focus-within)::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  & .title::first-letter {
+    font-size: 200%;
+    color: crimson;
+  }
+}
+
+/* ANIMATIONS + STEPS + CUBIC-BEZIER */
+@keyframes flicker {
+  0%   { opacity: 1; }
+  45%  { opacity: 0.5; }
+  55%  { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+.flicker {
+  animation: flicker 750ms infinite steps(4, jump-both);
+  animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* PRINT + MEDIA QUERIES + @SUPPORTS + @LAYER */
+@media print {
+  body {
+    color: black !important;
+    background: none !important;
+  }
+}
+
+@supports (grid-template-rows: subgrid) {
+  .subgrid {
+    display: grid;
+    grid-template-rows: subgrid;
+  }
+}
+
+@layer components {
+  .button {
+    padding: env(safe-area-inset-top, 1rem);
+    background: repeating-linear-gradient(45deg, red, red 10px, blue 10px, blue 20px);
+    border: 3px dashed transparent;
+  }
+}
+
+/* BIZARRE ESCAPES + EMPTY SELECTORS + :dir() */
+.\31 00\%-crazy\ selector:dir(rtl) {
+  display: inline-block;
+  visibility: hidden;
+}
+
+/* MIXED UNITS */
+.units {
+  margin: 10px 2em 3vh 5%;
+  padding: 0.5ch 2ex 3rem;
+  max-height: 100lvh;
+  min-width: 100cqw;
+  aspect-ratio: 16 / 9;
+}
+
+/* PSEUDO ELEMENTS CHAINED + EMPTY RULES + INVALIDS */
+.foo::after::before {
+  /* Double pseudo-element chain — mostly invalid but parseable */
+  content: "⚙";
+}
+
+.invalid-declaration {
+  unknown-prop: !@#$;
+  color red  // missing colon;
+}
+
+/* !important everywhere */
+.imp {
+  color: green !important;
+  background: white !important;
+  border: solid 1px black !important;
+}
