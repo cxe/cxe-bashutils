@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+declare -F url_content &>/dev/null || {
+    url_content() {
+        [ "$1" ] || return 1
+        curl -sLko /dev/null --max-time 3 "$1"
+    }
+}
+
+# execute only if not sourced
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && [ "$*" ] && url_content "$@"

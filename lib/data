@@ -26,10 +26,6 @@ declare -F data &>/dev/null || {
         set -- "${args[@]}" && result_data=""
 
         case "$1" in
-            content)
-                local host="$2"
-                result_data="$( curl -s --max-time $timeout "$host" )"
-                ;;
             await)
                 local host="$2" interval=${2:-1}
                 while true; do

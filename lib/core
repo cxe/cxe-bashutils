@@ -38,6 +38,24 @@ declare -F trap &>/dev/null || {
         while IFS= read -r -t "${2:-1}" ln; do "$1" "$ln"; done
     }
 
+    var(){
+        local name temp
+        for name; do
+            temp=""
+            if [[ "$name" == *=* ]]; then
+                temp="${1#*=}"
+                name="${name%%=*}"
+            fi
+            if [ "$name" ]; then
+                local -n data="$name"
+                if [ "$temp" ]; then
+                    data="$temp"
+                fi
+            fi
+        done
+    }
+
+
     # @return: array|boolean|builtin|file|function|number|object|string|undefined
     # @usage:  typeof <varname>|<command> [<matcher>] [<match>]
     #          if matchers are used no output is generated
@@ -136,7 +154,7 @@ declare -F trap &>/dev/null || {
         elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
             tasklist | grep -i "$process" >/dev/null
         elif command -v ps >/dev/null 2>&1; then
-            ps aux | grep -E "[[:<:]]$process[[:>:]]" | grep -v grep >/dev/null
+            ps aux | grep -E "[[:<:]]${process}[[:>:]]" | grep -v grep >/dev/null
         else
             return 2
         fi
