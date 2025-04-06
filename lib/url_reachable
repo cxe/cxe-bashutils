@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+declare -F url_reachable &>/dev/null || {
+    url_reachable() {
+        [ "$1" ] || return 1
+        local status
+        status=$(curl -sko /dev/null --max-time 5 -w "%{http_code}" "$1")
+        [[ "$status" == 2* ]]
+    }
+}
+
+# execute only if not sourced
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && [ "$*" ] && url_reachable "$@"
