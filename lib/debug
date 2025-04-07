@@ -1,41 +1,42 @@
 #!/usr/bin/env bash
 
+##
+# debug function (107d845731fc85393e963e6c71ab50eeab71d39fa90561c0514df85149e8310b)
+# @version (2025-04-08)
+##
 declare -F debug &>/dev/null || {
-    source "${BASH_SOURCE[0]%/*}/fs"
-
-    debug() {
-        local result_name="" result_data timeout=2 verbose=false
-
-        declare -a args=()
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-                -n)
-                    declare result_name="$2" && declare -n result_data="$result_name" && shift
-                    ;;
-                *)
-                    args+=("$1")
-                    ;;
-            esac
-            shift
-        done
-        set -- "${args[@]}" && result_data=""
-
+  debug(){
+    local result_name="" result_data timeout=2 verbose=false
+    
+    declare -a args=()
+    while [[ $# -gt 0 ]]; do
         case "$1" in
-            sources|imports)
-                # list scripts that are currently loaded
-                /usr/bin/env bash -lixc exit 2>&1 | sed -n 's/^+* \(source\|\.\) //p'
+            -n)
+                declare result_name="$2" && declare -n result_data="$result_name" && shift
                 ;;
-            var-source)
-                # list scripts that define a variable
-                # @usage: e.g. `debug_varfile PATH`
-                /usr/bin/env bash -lixc exit 2>&1 | sed -n 's/^+* \(source\|\.\) //p' | while read f ; do
-                    local data="$( fs_data "$f" )"
-                    if [[ "$data" == *"$1"=* ]]; then echo "$f"; fi
-                done
+            *)
+                args+=("$1")
                 ;;
         esac
-    }
+        shift
+    done
+    set -- "${args[@]}" && result_data=""
+    
+    case "$1" in
+        sources|imports)
+            # list scripts that are currently loaded
+            /usr/bin/env bash -lixc exit 2>&1 | sed -n 's/^+* \(source\|\.\) //p'
+            ;;
+        var-source)
+            # list scripts that define a variable
+            # @usage: e.g. `debug_varfile PATH`
+            /usr/bin/env bash -lixc exit 2>&1 | sed -n 's/^+* \(source\|\.\) //p' | while read f ; do
+                local data="$( fs_data "$f" )"
+                if [[ "$data" == *"$1"=* ]]; then echo "$f"; fi
+            done
+            ;;
+    esac
+          }
 }
 
-# Execute only if not sourced
-[[ "${BASH_SOURCE[0]}" == "$0" ]] || [ "$*" ] && debug "$@"
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && debug "$@"
