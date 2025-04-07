@@ -18,7 +18,7 @@ build(){
     read -r hash _ < <( sha256sum "$file" )
     case "$name" in
       *.sh)
-        if ! grep -q "$hash" "$dist"; then
+        if [ ! -f "$dist" ] || ! grep -q "$hash" "$dist"; then
           name="${name:0:-3}"
           echo -e "#!/usr/bin/env bash\n" > "$dist"
           echo -e "##" >> "$dist"
