@@ -1,32 +1,40 @@
 #!/usr/bin/env bash
 
-declare -gxr WORKDIR_LOCAL="$( realpath -- "${BASH_SOURCE[0]%/*}" )" \
-             WORKDIR_BUILD="$WORKDIR_LOCAL/tmp/latest" \
+declare -gxr WORKDIR_LOCAL="$( realpath -- "${BASH_SOURCE[0]%/*}" )"
+declare -gxr WORKDIR_BUILD="$WORKDIR_LOCAL/tmp/latest" \
              WORKDIR_TEST="$WORKDIR_LOCAL/test" \
-             WORKDIR_SRC="$WORKDIR_LOCAL/src" #
+             WORKDIR_SRC="$WORKDIR_LOCAL/src" \
              WORKDIR_LIB="$WORKDIR_LOCAL/lib"
 
 build(){
-
-#  declare -A file && while file_list -n file "$WORKDIR_LIB"; do
-#  sys_command "${file[name]}" && fail $? "module name conflict '${file[name]}'"
-#done
-  local file name
+  local file name dist hash date=$( date +"%Y-%m-%d" )
 
   for file in "$WORKDIR_SRC"/*; do
-    if [[ -f "$file" && "$file" == *.js ]]; then
-      name="${file##*/}"; [[ "$name" == *" copy"* ]] || [[ "$name" == *.tmp ]] && continue
-      node "$file"
-    fi
-  done
-
-  for file in "$WORKDIR_LIB"/*; do
-    if [[ -f "$file" ]]; then
-      name="${file##*/}"; [[ "$name" == *" copy"* ]] || [[ "$name" == *.tmp ]] && continue
-      if type "$word" >/dev/null 2>&1; then
-        echo "lib/$name" conflicts with a system command && exit 1
-      fi
-    fi
+    [ -f "$file" ] || continue
+    [[ "$file" == *" copy"* ]] || [[ "$file" == *.tmp ]] && continue
+    
+    name="${file##*/}"
+    dist="$WORKDIR_LIB/${name:0:-3}"
+    read -r hash _ < <( sha256sum "$file" )
+    case "$name" in
+      *.sh)
+        if ! grep -q "$hash" "$dist"; then
+          name="${name:0:-3}"
+          echo -e "#!/usr/bin/env bash\n" > "$dist"
+          echo -e "##" >> "$dist"
+          echo -e "# $name function ($hash)" >> "$dist"
+          echo -e "# @version ($date)" >> "$dist"
+          echo -e "##" >> "$dist"
+          echo -e "declare -F $name &>/dev/null || {\n  $name(){" >> "$dist"
+          sed 's/^/    /' "$file" >> "$dist"
+          echo -e "  }\n}\n" >> "$dist"
+          echo -e "[[ \"\${BASH_SOURCE[0]}\" == \"\$0\" ]] && $name \"\$@\"" >> "$dist" # Execute only if not sourced
+        fi
+        ;;
+      *.js)
+        node "$file"
+        ;;
+    esac
   done
 }
 
