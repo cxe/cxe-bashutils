@@ -26,11 +26,6 @@ declare -F sys &>/dev/null || {
       ip) # Get public IP
         curl -s "https://ipinfo.io/ip" ;;
 
-      portscan) # Scan open ports on a host (without nmap)
-        for port in {1..1000}; do
-          (echo >/dev/tcp/$2/$port) &>/dev/null && echo "Port $port is open"
-        done ;;
-
       cpu) # Get CPU info
         grep -m1 'model name' /proc/cpuinfo 2>/dev/null || sysctl -n machdep.cpu.brand_string ;;
 

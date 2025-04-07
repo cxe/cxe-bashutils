@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# list currently listening open ports concurrently using builtin /dev/tcp (no nmap or netstat required)
+# a full scan of all 65535 ports can take up to 10 mins
+# @alias port_used, port_is_open
+declare -F portscan &>/dev/null || {
+    portscan() {
+        local concurrency=96
+        local pids=() ports=() current=()
+        local host="0.0.0.0"
+        local tmpfile; tmpfile=$(mktemp) && : > "$tmpfile"
+
+        trap '[ -f "$tmpfile" ] && { echo -ne "\r\033[1A\033[2K" >&2; xargs < "$tmpfile"; echo -ne "\033[2K"; rm -f "$tmpfile"; }' RETURN EXIT
+
+        [[ ! "$1" =~ ^[0-9]+(-[0-9]+)?$ ]] && { host="$1"; shift; }
+
+        [ $# -eq 0 ] && set -- 1-65535
+        for arg in "$@"; do
+            if [[ "$arg" =~ ^[0-9]+$ ]]; then
+                ports+=("$arg")
+            elif [[ "$arg" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+                for ((p=${BASH_REMATCH[1]}; p<=${BASH_REMATCH[2]}; p++)); do
+                    ports+=("$p")
+                done
+            fi
+        done
+
+        local update=$(( ${#ports[@]} > 15 ? 1 : 0 ))
+
+        local active=0
+        for port in "${ports[@]}"; do
+            { exec 3<>"/dev/tcp/$host/$port" && echo -n "$port " >> "$tmpfile"; } 2>/dev/null &
+            pids+=("$!")
+            ((active++))
+
+            if (( update )); then
+                read -ra current < "$tmpfile"
+                echo -ne "\r${current[*]} $port" >&2
+            fi
+
+            if (( active >= concurrency )); then
+                wait "${pids[0]}"
+                pids=("${pids[@]:1}")
+                ((active--))
+            fi
+        done
+
+        for pid in "${pids[@]}"; do
+            wait "$pid"
+        done
+    }
+}
+
+# Execute only if script is run directly (not sourced)
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && portscan "$@"
