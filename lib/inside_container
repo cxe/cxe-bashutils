@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+declare -F inside_container &>/dev/null || {
+    inside_container(){
+        grep -qE '/docker/|/lxc/' /proc/1/cgroup 2>/dev/null || [ -f /.dockerenv ]
+    }
+}
+
+# execute only if not sourced
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && inside_container "$@"
+
+
