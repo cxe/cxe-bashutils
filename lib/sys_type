@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ##
-# sys_type function (b503fa13ec146279419d8d457ce4c48be691935ee58b2f12844d92ff98263e9e)
+# sys_type function (7d1f5a0f534214bc07839dbf3e00382ea566f1498e73caf08edca71c3e9e7baa)
 # @version (2025-04-08)
 ##
 declare -F sys_type &>/dev/null || {
@@ -12,8 +12,8 @@ declare -F sys_type &>/dev/null || {
         local cond="${1:-}" && cond="${cond,,}"
         case "$cond" in
             mac|darwin|ios) [[ $os == darwin* ]] ;;
-            linux|unix) [[ $os == *linux* || $os == *bsd* || $os == *solaris* || $os == *android* || $os == *gnu* ]] ;;
-            win) [[ $os == *cygwin* || $os == *mingw* ]] ;;
+            linux|unix|gnu|solaris|android|sunos|bsd) [[ $os == *linux* || $os == *bsd* || $os == *solaris* || $os == *sunos* || $os == *android* || $os == *gnu* ]] ;;
+            win) [[ $os == *cygwin* || $os == *mingw* || $os == *msys* || $os == *windows* || $os == win* ]] ;;
             *) [[ $os == "$cond"* ]] ;;
         esac
         return $?
