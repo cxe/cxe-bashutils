@@ -20,15 +20,21 @@ build(){
       *.sh)
         if [ ! -f "$dist" ] || ! grep -q "$hash" "$dist"; then
           name="${name:0:-3}"
-          echo -e "#!/usr/bin/env bash\n" > "$dist"
-          echo -e "##" >> "$dist"
-          echo -e "# $name function ($hash)" >> "$dist"
-          echo -e "# @version ($date)" >> "$dist"
-          echo -e "##" >> "$dist"
-          echo -e "declare -F $name &>/dev/null || {\n  $name(){" >> "$dist"
+
+          # doc-block
+          cat <<-EOF > "$dist"
+						#!/usr/bin/env bash
+						
+						##
+						# $name function ($hash)
+						# @version ($date)
+						##
+					EOF
+
+          echo -e "declare -F $name &>/dev/null || {" >> "$dist"
           sed 's/^/    /' "$file" >> "$dist"
-          echo -e "  }\n}\n" >> "$dist"
-          echo -e "[[ \"\${BASH_SOURCE[0]}\" == \"\$0\" ]] && $name \"\$@\"" >> "$dist" # Execute only if not sourced
+          echo -e "}\n" >> "$dist"
+          echo -e "[ \"\${BASH_SOURCE[0]}\" = \"\$0\" ] && $name \"\$@\"" >> "$dist" # Execute only if not sourced
         fi
         ;;
       *.js)

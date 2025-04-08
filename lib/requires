@@ -1,16 +1,27 @@
 #!/usr/bin/env bash
 
+##
+# requires function (b34ef9886c19261cca3834f1cacd1e31b8bf3dd4b1744e23584d7337c958826a)
+# @version (2025-04-08)
+##
 declare -F requires &>/dev/null || {
     requires(){
         local cmd=("$@") err
+    
+        # Check if the command exists
         command -v "${cmd[0]}" > /dev/null 2>&1 || err="'${cmd[0]}' is not installed"
-        if [ ! "$err" ] && [ "$2" ]; then
-            [[ "$2" == *" "* ]] && cmd=("${@:2}")
+    
+        # If second argument is provided, treat it as a test command
+        if [ -z "$err" ] && [ "$2" ]; then
+            [[ "$2" == *" "* ]] && cmd=("${@:2}")  # if spaces are present in arg2 (vs having 3 or more) use only arg2 as test command
             "${cmd[@]}" > /dev/null 2>&1 || err="'$1' is not running"
         fi
-        [ "$err" ] && echo -e "\033[31;2m${err}\033[0m" >&2 && exit 2
-    }
-}
+    
+        # Print error and exit if needed
+        if [ "$err" ]; then
+            echo -e "\033[31;2m${err}\033[0m" >&2
+            exit 2
+        fi
+    }}
 
-# Execute only if script is run directly (not sourced)
-[[ "${BASH_SOURCE[0]}" == "$0" ]] && requires "$@"
+[ "${BASH_SOURCE[0]}" = "$0" ] && requires "$@"

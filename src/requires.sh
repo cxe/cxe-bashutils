@@ -1,0 +1,18 @@
+requires(){
+    local cmd=("$@") err
+
+    # Check if the command exists
+    command -v "${cmd[0]}" > /dev/null 2>&1 || err="'${cmd[0]}' is not installed"
+
+    # If second argument is provided, treat it as a test command
+    if [ -z "$err" ] && [ "$2" ]; then
+        [[ "$2" == *" "* ]] && cmd=("${@:2}")  # if spaces are present in arg2 (vs having 3 or more) use only arg2 as test command
+        "${cmd[@]}" > /dev/null 2>&1 || err="'$1' is not running"
+    fi
+
+    # Print error and exit if needed
+    if [ "$err" ]; then
+        echo -e "\033[31;2m${err}\033[0m" >&2
+        exit 2
+    fi
+}

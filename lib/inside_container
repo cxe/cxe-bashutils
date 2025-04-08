@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 
 ##
-# inside_container function (8b99f0cad4732d47246098b67df3e9a10945e844c2e909e07fb2036270416cfd)
+# inside_container function (b7486571adb3beb7255acc0fbeea60703e0054f40a074e194119407e75eb633b)
 # @version (2025-04-08)
 ##
 declare -F inside_container &>/dev/null || {
-  inside_container(){
-    grep -qE '/docker/|/lxc/' /proc/1/cgroup 2>/dev/null || [ -f /.dockerenv ]
-  }
-}
+    inside_container(){
+        grep -qE '/docker/|/lxc/' /proc/1/cgroup 2>/dev/null || [ -f /.dockerenv ]
+    }}
 
-[[ "${BASH_SOURCE[0]}" == "$0" ]] && inside_container "$@"
+[ "${BASH_SOURCE[0]}" = "$0" ] && inside_container "$@"
