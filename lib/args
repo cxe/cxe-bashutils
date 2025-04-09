@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 ##
-# args function (a67c3475662b97c7b7a9ff0e4ad9186ed2c17471ef6e49243e3e713c671aad64)
-# @version (2025-04-08)
+# args function (aec175d2f808fcd8e9e2a25a4419b66fdf7565e7dcd0f204b2064e8bdf17bef2)
+# @version (2025-04-09)
 ##
 declare -F args &>/dev/null || {
     

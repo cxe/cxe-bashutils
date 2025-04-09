@@ -4,21 +4,11 @@
 declare -F sys &>/dev/null || {
   sys() {
     case "$1" in
-      type) # Check OS type (linux, win, mac, etc.)
-        local os="${OSTYPE,,}"
-        case "${2,,}" in
-          mac|darwin|ios) [[ $os == darwin* ]] ;;
-          linux|unix) [[ $os == *linux* || $os == *bsd* || $os == *solaris* || $os == *android* || $os == *gnu* ]] ;;
-          win) [[ $os == *cygwin* || $os == *mingw* ]] ;;
-          *) [[ $os == $2* ]] ;;
-        esac
-        return $? ;;
+
 
       command) # Check if a command is installed
         type -t -- "$2" &>/dev/null && return 0 || return 1 ;;
 
-      arch) # Get OS architecture
-        uname -m ;;
 
       path_bin) # Check if a command is a binary in PATH
         command -v "$2" &>/dev/null ;;
@@ -40,9 +30,6 @@ declare -F sys &>/dev/null || {
 
       process) # Check if a process is running
         pgrep -x "$2" &>/dev/null && echo "Process '$2' is running" || echo "Process '$2' not found" ;;
-
-      os) # Get OS version
-        uname -a ;;
 
       network) # Get local network info
         ip -4 addr show scope global 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' || ifconfig 2>/dev/null | awk '/inet / {print $2}' ;;

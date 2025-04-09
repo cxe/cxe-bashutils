@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+##
+# sys_os function (0cbd5a45dcee7a3542354c7598654e85b113497e1b9fc5e05cc340f99e48f167)
+# @version (2025-04-09)
+##
+declare -F sys_os &>/dev/null || {
+    sys_os() {
+        uname -a
+    }
+}
+
+[ "${BASH_SOURCE[0]}" = "$0" ] && sys_os "$@"
