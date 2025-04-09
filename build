@@ -1,47 +1,49 @@
 #!/usr/bin/env bash
 
-declare -gxr WORKDIR_LOCAL="$( realpath -- "${BASH_SOURCE[0]%/*}" )"
-declare -gxr WORKDIR_BUILD="$WORKDIR_LOCAL/tmp/latest" \
-             WORKDIR_TEST="$WORKDIR_LOCAL/test" \
-             WORKDIR_SRC="$WORKDIR_LOCAL/src" \
-             WORKDIR_LIB="$WORKDIR_LOCAL/lib"
+declare -F build &>/dev/null || {
+  declare -gxr WORKDIR_LOCAL="$( realpath -- "${BASH_SOURCE[0]%/*}" )"
+  declare -gxr WORKDIR_BUILD="$WORKDIR_LOCAL/tmp/latest" \
+              WORKDIR_TEST="$WORKDIR_LOCAL/test" \
+              WORKDIR_SRC="$WORKDIR_LOCAL/src" \
+              WORKDIR_LIB="$WORKDIR_LOCAL/lib"
+  
+  build(){
+    local file name dist hash date=$( date +"%Y-%m-%d" )
 
-build(){
-  local file name dist hash date=$( date +"%Y-%m-%d" )
+    for file in "$WORKDIR_SRC"/*; do
+      [ -f "$file" ] || continue
+      [[ "$file" == *" copy"* ]] || [[ "$file" == *.tmp ]] && continue
+      
+      name="${file##*/}"
+      dist="$WORKDIR_LIB/${name:0:-3}"
+      read -r hash _ < <( sha256sum "$file" )
+      case "$name" in
+        *.sh)
+          if [ ! -f "$dist" ] || ! grep -q "$hash" "$dist"; then
+            name="${name:0:-3}"
 
-  for file in "$WORKDIR_SRC"/*; do
-    [ -f "$file" ] || continue
-    [[ "$file" == *" copy"* ]] || [[ "$file" == *.tmp ]] && continue
-    
-    name="${file##*/}"
-    dist="$WORKDIR_LIB/${name:0:-3}"
-    read -r hash _ < <( sha256sum "$file" )
-    case "$name" in
-      *.sh)
-        if [ ! -f "$dist" ] || ! grep -q "$hash" "$dist"; then
-          name="${name:0:-3}"
+            # doc-block
+            cat <<-EOF > "$dist"
+              #!/usr/bin/env bash
+              
+              ##
+              # $name function ($hash)
+              # @version ($date)
+              ##
+            EOF
 
-          # doc-block
-          cat <<-EOF > "$dist"
-						#!/usr/bin/env bash
-						
-						##
-						# $name function ($hash)
-						# @version ($date)
-						##
-					EOF
-
-          echo -e "declare -F $name &>/dev/null || {" >> "$dist"
-          sed 's/^/    /' "$file" >> "$dist"
-          echo -e "}\n" >> "$dist"
-          echo -e "[ \"\${BASH_SOURCE[0]}\" = \"\$0\" ] && $name \"\$@\"" >> "$dist" # Execute only if not sourced
-        fi
-        ;;
-      *.js)
-        node "$file"
-        ;;
-    esac
-  done
+            echo -e "declare -F $name &>/dev/null || {" >> "$dist"
+            sed 's/^/    /' "$file" >> "$dist"
+            echo -e "}\n" >> "$dist"
+            echo -e "[ \"\${BASH_SOURCE[0]}\" = \"\$0\" ] && $name \"\$@\"" >> "$dist" # Execute only if not sourced
+          fi
+          ;;
+        *.js)
+          node "$file"
+          ;;
+      esac
+    done
+  }
 }
 
 build "$@"
