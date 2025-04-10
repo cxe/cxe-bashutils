@@ -36,9 +36,9 @@ declare -F build &>/dev/null || {
 							#!/usr/bin/env bash
 							
 							##
-							# $name function
+							# $name function${head}
 							# @version ($date)
-							# @checksum ${hash}${head}
+							# @checksum ${hash}
 							##
 						EOF
 
