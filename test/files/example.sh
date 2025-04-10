@@ -18,6 +18,7 @@ awk '{print $1"\t"$2}' file.txt
 sed -i 's/old/new/g' file.txt
 cut -d ',' -f1-3 data.csv
 diff -u file1.txt file2.txt
+json --engines.node=21 engines
 
 # Network Commands
 ping -4 -c 4 google.com

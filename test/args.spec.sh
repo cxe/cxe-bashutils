@@ -1,17 +1,10 @@
 #!/usr/bin/env bash
 
-source "${BASH_SOURCE[0]%/*}/../lib/spec"
+source "${BASH_SOURCE[0]%/*}/../lib/testing"
 source "${BASH_SOURCE[0]%/*}/../lib/log"
 source "${BASH_SOURCE[0]%/*}/../lib/args"
 
-declare -A opts_example=(
-    ["find / -name \"myfile.txt\""]='[-name]=-name+'
-    ["grep -e \"error\" -e \"warning\" /var/log/syslog"]='[-e]=@+'
-    ["cut -d ',' -f1-3 data.csv"]='[-d]=+ [-f]=?'
-    ["ping -4 -c 4 google.com"]='[-c]=+'
-    ["scp -P 2222 user@host:/remote/path /local/path"]='[-P]=+'
-)
-
+# bash command call samples
 declare -A args_example=(
     ["exit 503"]='-a args=([0]="503") -A opts=()'
     ["ls -la"]='-a args=() -A opts=([l]="1" [a]="1" )'
@@ -28,17 +21,18 @@ declare -A args_example=(
     ["sed -i 's/old/new/g' file.txt"]='-a args=([0]="s/old/new/g" [1]="file.txt") -A opts=([i]="1" )'
     ["cut -d ',' -f1-3 data.csv"]='-a args=([0]="data.csv") -A opts=([f]="1-3" [d]="," )'
     ["diff -u file1.txt file2.txt"]='-a args=([0]="file1.txt" [1]="file2.txt") -A opts=([u]="1" )'
+    ["json --engines.node=21 engines"]='-a args=([0]="engines") -A opts=([engines.node]="21" )'
     ["ping -4 -c 4 google.com"]='-a args=([0]="google.com") -A opts=([4]="1" [c]="4" )'
     ["curl -X GET https://api.example.com/data"]='-a args=([0]="GET" [1]="https://api.example.com/data") -A opts=([X]="1" )'
     ["wget --output-document=downloaded_file.html https://example.com"]='-a args=([0]="https://example.com") -A opts=([output_document]="downloaded_file.html" )'
     ["netstat -tulnp"]='-a args=() -A opts=([u]="1" [t]="1" [p]="1" [n]="1" [l]="1" )'
     ["ssh -i private_key.pem user@server"]='-a args=([0]="private_key.pem" [1]="user@server") -A opts=([i]="1" )'
     ["scp -P 2222 user@host:/remote/path /local/path"]='-a args=([0]="user@host:/remote/path" [1]="/local/path") -A opts=([P]="2222" )'
-    ["tar -czvf archive.tar.gz /path/to/folder"]=''
-    ["tar --exclude=*.log -czvf backup.tar.gz /var/log"]=''
-    ["zip -r archive.zip folder/"]=''
-    ["unzip archive.zip"]=''
-    ["ps aux --sort=-%mem"]=''
+    ["tar -czvf archive.tar.gz /path/to/folder"]='-a args=([0]="/path/to/folder") -A opts=([z]="1" [v]="1" [f]="archive.tar.gz" [c]="1" )'
+    ["tar --exclude=*.log -czvf backup.tar.gz /var/log"]='-a args=([0]="/var/log") -A opts=([exclude]="*.log" [z]="1" [v]="1" [f]="backup.tar.gz" [c]="1" )'
+    ["zip -r archive.zip folder/"]='-a args=([0]="archive.zip" [1]="folder/") -A opts=([r]="1" )'
+    ["unzip archive.zip"]='-a args=([0]="archive.zip") -A opts=()'
+    ["ps aux --sort=-%mem"]='-a args=([0]="aux") -A opts=([sort]="-%mem" )'
     ["htop -u username"]=''
     ["top"]=''
     ["tail -n 100 log.txt"]=''
@@ -94,6 +88,16 @@ declare -A args_example=(
     ["hexdump -C file.bin | head -n 20"]=''
 )
 
+# these option settings must correlate with the args above and the intention of the command
+declare -A opts_example=(
+    ["find"]='[-name]=-name+'
+    ["grep"]='[-e]=@+'
+    ["cut"]='[-d]=+ [-f]=?'
+    ["ping"]='[-c]=+'
+    ["scp"]='[-P]=+'
+    ["tar"]='[-f]=+'
+)
+
 describe args
 
     while IFS= read -r line || [[ -n $line ]]; do
@@ -108,6 +112,7 @@ describe args
         if [[ -n "${args_example["$example"]+set}" ]]; then
             declare -A opts=() && declare -a args=()
             [[ "${opts_example["$example"]}" ]] && eval "opts=(${opts_example["$example"]})"
+            [[ "${opts_example["${example%% *}"]}" ]] && eval "opts=(${opts_example["${example%% *}"]})"
             if [[ "$example" == *[[:space:]]* ]]; then
                 eval "args=(${example#* })"
                 args "${args[@]}"

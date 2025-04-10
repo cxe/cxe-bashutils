@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source "${BASH_SOURCE[0]%/*}/../lib/spec"
+source "${BASH_SOURCE[0]%/*}/../lib/testing"
 source "${BASH_SOURCE[0]%/*}/../lib/fs"
 
 describe "fs"
