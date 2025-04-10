@@ -28,7 +28,7 @@ declare -F build &>/dev/null || {
             head="$(printf '%s\n' "$body" | awk '/^#/ { print; next } /^$/ { print; next } { exit }')"
             if [ "$head" ]; then
               body="$(printf '%s' "$body" | awk 'NF && $0 !~ /^[[:space:]]*#/ {f=1} f')"
-              head=$'\n#\n'"$head"
+              head=$'\n'"$head"
             fi
 
             # doc-block
@@ -36,8 +36,9 @@ declare -F build &>/dev/null || {
 							#!/usr/bin/env bash
 							
 							##
-							# $name function ($hash)
-							# @version ($date)${head}
+							# $name function
+							# @version ($date)
+							# @checksum ${hash}${head}
 							##
 						EOF
 
