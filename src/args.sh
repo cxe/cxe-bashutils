@@ -1,5 +1,6 @@
-
-# parse arguments into `args`, options and flags into `opts`
+# Parses CLI arguments into `args` (positional) and `opts` (options/flags)
+# Supports default values, aliases, eager args, arrays, and combined flags
+#
 # @usage: declare -A opts=() && declare -a args && args "$@" && set -- "${args[@]}"
 #         opts can define option-default-values
 #         short to long option mapping supported by -* keys in opts

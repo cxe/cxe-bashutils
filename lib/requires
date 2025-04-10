@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 ##
-# requires function (3a5596ab9c3be9ebab3ab57cb870d548c6da04e9fbe6ea89a7e13d6a7ac63c4b)
-# @version (2025-04-09)
+# requires function (b34ef9886c19261cca3834f1cacd1e31b8bf3dd4b1744e23584d7337c958826a)
+# @version (2025-04-10)
 ##
 declare -F requires &>/dev/null || {
     requires(){
@@ -22,6 +22,7 @@ declare -F requires &>/dev/null || {
             echo -e "\033[31;2m${err}\033[0m" >&2
             exit 2
         fi
-    }}
+    }
+}
 
 [ "${BASH_SOURCE[0]}" = "$0" ] && requires "$@"

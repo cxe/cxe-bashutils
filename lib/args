@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 
 ##
-# args function (aec175d2f808fcd8e9e2a25a4419b66fdf7565e7dcd0f204b2064e8bdf17bef2)
-# @version (2025-04-09)
+# args function (1d93e62b7643bb4e9078fac738bc6ede0f94e5f2f30b02d05f156562f46ad14f)
+# @version (2025-04-10)
+#
+# Parses CLI arguments into `args` (positional) and `opts` (options/flags)
+# Supports default values, aliases, eager args, arrays, and combined flags
+#
+# @usage: declare -A opts=() && declare -a args && args "$@" && set -- "${args[@]}"
+#         opts can define option-default-values
+#         short to long option mapping supported by -* keys in opts
+#         example: declare -A opts=( [-e]=--export [--export]=+@ ) && declare -a args && args "$@"
 ##
 declare -F args &>/dev/null || {
-    
-    # parse arguments into `args`, options and flags into `opts`
-    # @usage: declare -A opts=() && declare -a args && args "$@" && set -- "${args[@]}"
-    #         opts can define option-default-values
-    #         short to long option mapping supported by -* keys in opts
-    #         example: declare -A opts=( [-e]=--export [--export]=+@ ) && declare -a args && args "$@"
     args(){
         declare f i j k l m n v
         declare -a tmp=()

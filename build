@@ -8,7 +8,7 @@ declare -F build &>/dev/null || {
               WORKDIR_LIB="$WORKDIR_LOCAL/lib"
   
   build(){
-    local file name dist hash date=$( date +"%Y-%m-%d" )
+    local file name dist hash date=$( date +"%Y-%m-%d" ) head body
 
     for file in "$WORKDIR_SRC"/*; do
       [ -f "$file" ] || continue
@@ -17,10 +17,19 @@ declare -F build &>/dev/null || {
       name="${file##*/}"
       dist="$WORKDIR_LIB/${name:0:-3}"
       read -r hash _ < <( sha256sum "$file" )
+      head=""
+
       case "$name" in
         *.sh)
           if [ ! -f "$dist" ] || ! grep -q "$hash" "$dist"; then
             name="${name:0:-3}"
+            body="$(<"$file")"
+            body="${body#"${body%%[!$'\n']*}"}" # remove leading blank lines
+            head="$(printf '%s\n' "$body" | awk '/^#/ { print; next } /^$/ { print; next } { exit }')"
+            if [ "$head" ]; then
+              body="$(printf '%s' "$body" | awk 'NF && $0 !~ /^[[:space:]]*#/ {f=1} f')"
+              head=$'\n#\n'"$head"
+            fi
 
             # doc-block
             cat <<-EOF > "$dist"
@@ -28,12 +37,12 @@ declare -F build &>/dev/null || {
 							
 							##
 							# $name function ($hash)
-							# @version ($date)
+							# @version ($date)${head}
 							##
 						EOF
 
             echo -e "declare -F $name &>/dev/null || {" >> "$dist"
-            sed 's/^/    /' "$file" >> "$dist"
+            printf '%s\n' "$body" | sed 's/^/    /' >> "$dist"
             echo -e "}\n" >> "$dist"
             echo -e "[ \"\${BASH_SOURCE[0]}\" = \"\$0\" ] && $name \"\$@\"" >> "$dist" # Execute only if not sourced
           fi
