@@ -33,9 +33,9 @@ declare -A args_example=(
     ["zip -r archive.zip folder/"]='-a args=([0]="archive.zip" [1]="folder/") -A opts=([r]="1" )'
     ["unzip archive.zip"]='-a args=([0]="archive.zip") -A opts=()'
     ["ps aux --sort=-%mem"]='-a args=([0]="aux") -A opts=([sort]="-%mem" )'
-    ["htop -u username"]=''
-    ["top"]=''
-    ["tail -n 100 log.txt"]=''
+    ["htop -u username"]='-a args=() -A opts=([u]="username" )'
+    ["top"]='-a args=() -A opts=()'
+    ["tail -n 100 log.txt"]='-a args=([0]="log.txt") -A opts=([n]="100" )'
     ["du -sh * | sort -rh"]=''
     ["chmod 755 script.sh"]=''
     ["chown user:group file.txt"]=''
@@ -96,6 +96,8 @@ declare -A opts_example=(
     ["ping"]='[-c]=+'
     ["scp"]='[-P]=+'
     ["tar"]='[-f]=+'
+    ["htop"]='[-u]=+'
+    ["tail"]='[-n]=+'
 )
 
 describe args
