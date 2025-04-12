@@ -1,0 +1,1 @@
+diskusage() { df -h / ; }

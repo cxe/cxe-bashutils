@@ -6,8 +6,8 @@
 # a full scan of all 65535 ports can take up to 5 mins
 #
 # @alias port_used, port_is_open
-# @version (2025-04-10)
-# @checksum dcb5bb25f9c9b48c233ae9b7ba98df895a42738a27d1ab5e8c63e581edc0b9ea
+# @version (2025-04-12)
+# @checksum 6f487f40f3984f0fedec9a238334ae25c9b7c1320ba5117a1d093baad3a96d3f
 ##
 declare -F portscan &>/dev/null || {
     portscan() {

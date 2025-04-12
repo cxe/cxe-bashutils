@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+##
+# diskusage function
+# @version (2025-04-12)
+# @checksum 60d19af5ef41c2f012a3e42480fea4c2105c442ffce9d8632d36480a46d7990b
+##
+declare -F diskusage &>/dev/null || {
+    diskusage() { df -h / ; }
+}
+
+[ "${BASH_SOURCE[0]}" = "$0" ] && diskusage "$@"
