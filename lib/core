@@ -32,11 +32,7 @@ declare -F trap &>/dev/null || {
         fi
     }
 
-    # @usage: stream_into echo
-    stream_into() {
-        command -v "$1" >/dev/null || return 1 "Error: Invalid command"
-        while IFS= read -r -t "${2:-1}" ln; do "$1" "$ln"; done
-    }
+
 
     var(){
         local name temp

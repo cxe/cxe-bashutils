@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
 ##
-# args function (1d93e62b7643bb4e9078fac738bc6ede0f94e5f2f30b02d05f156562f46ad14f)
-# @version (2025-04-10)
-#
+# args function
 # Parses CLI arguments into `args` (positional) and `opts` (options/flags)
 # Supports default values, aliases, eager args, arrays, and combined flags
 #
@@ -11,6 +9,8 @@
 #         opts can define option-default-values
 #         short to long option mapping supported by -* keys in opts
 #         example: declare -A opts=( [-e]=--export [--export]=+@ ) && declare -a args && args "$@"
+# @version (2025-04-14)
+# @checksum 9c1dee83b293f0ede108628487e6c9b527b937781d34fc11fe82c6540248ef09
 ##
 declare -F args &>/dev/null || {
     args(){

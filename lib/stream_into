@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+##
+# stream_into function
+# @usage: stream_into echo
+# @alias fileline
+# @version (2025-04-13)
+# @checksum ea281f84f76d838af5be18d314287c555fbf82e61b1d8847be03ed5e6be7922c
+##
+declare -F stream_into &>/dev/null || {
+    stream_into() {
+        local file= cmd= timeout= line=
+    
+        if [ -f "$1" ]; then
+            file="$1"
+            shift
+        fi
+    
+        cmd="${1:-echo}"
+        timeout="${2:-1}"
+    
+        command -v "$cmd" >/dev/null || { echo "Command not found: $cmd" >&2; return 1; }
+    
+        if [ -n "$file" ]; then
+            while IFS= read -rt "$timeout" line; do
+                "$cmd" "$line"
+            done < "$file"
+        else
+            while IFS= read -rt "$timeout" line; do
+                "$cmd" "$line"
+            done
+        fi
+    }
+}
+
+[ "${BASH_SOURCE[0]}" = "$0" ] && stream_into "$@"

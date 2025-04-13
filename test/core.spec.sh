@@ -12,8 +12,4 @@ describe "typeof"
     describe
 describe
 
-describe "stream_into"
-    it "should be red"
-        expect "foo" toBe "bar"
-    ti
-describe
+
