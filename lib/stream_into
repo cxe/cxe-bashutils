@@ -5,7 +5,7 @@
 # @usage: stream_into echo
 # @alias fileline
 # @version (2025-04-13)
-# @checksum ea281f84f76d838af5be18d314287c555fbf82e61b1d8847be03ed5e6be7922c
+# @checksum 278e2f170b31c0117c46f9d1b6af7598a9288401a95ef0bb93d218c0298df05a
 ##
 declare -F stream_into &>/dev/null || {
     stream_into() {
