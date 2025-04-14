@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+##
+# cpuinfo function
+# @version (2025-04-14)
+# @checksum 472d80b08eeac1b4e43c3a55c6897cd93a23f9085af64b4f77e7b5d5bc8d91d3
+##
+declare -F cpuinfo &>/dev/null || {
+    cpuinfo() {
+      if [ -f /proc/cpuinfo ]; then
+        model=$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2-)
+        cores=$(grep -c ^processor /proc/cpuinfo)
+        arch=$(uname -m)
+        echo "$model | Cores: $cores | Arch: $arch"
+      elif command -v sysctl &>/dev/null; then
+        model=$(sysctl -n machdep.cpu.brand_string)
+        cores=$(sysctl -n hw.ncpu)
+        arch=$(uname -m)
+        echo "$model | Cores: $cores | Arch: $arch"
+      else
+        echo "Unsupported system"
+        return 1
+      fi
+    }
+}
+
+[ "${BASH_SOURCE[0]}" = "$0" ] && cpuinfo "$@"
