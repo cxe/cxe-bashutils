@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+##
+# var function
+# @version (2025-04-16)
+# @checksum 355d4cb16d609adedc131f5367b0b8e5008c47fcb7b237b8cc0d50eadbcfa38c
+##
+declare -F var &>/dev/null || {
+    var(){
+        local name temp
+        for name; do
+            temp=""
+            if [[ "$name" == *=* ]]; then
+                temp="${1#*=}"
+                name="${name%%=*}"
+            fi
+            if [ "$name" ]; then
+                local -n data="$name"
+                if [ "$temp" ]; then
+                    data="$temp"
+                fi
+            fi
+        done
+    }
+}
+
+[ "${BASH_SOURCE[0]}" = "$0" ] && var "$@"
